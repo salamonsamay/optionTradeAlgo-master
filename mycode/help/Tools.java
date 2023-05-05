@@ -23,9 +23,9 @@ public class Tools {
     //contain  the  strategy info  that sended
     public  static Hashtable<Integer,String> sendedOrder=new Hashtable<>();
 
-    public static final String PATH ="read_file/etf/";
-    public static  String  DATE_START = "2023-04-16";
-    public static  String  DATE_END = "2023-04-29";
+    public static final String PATH ="read_file/all_symbol/";
+    public static  String  DATE_START = "2023-05-03";
+    public static  String  DATE_END = "2023-06-03";
 
 
     public static ArrayList<String> readCompanyFromFile(){
@@ -35,13 +35,14 @@ public class Tools {
         String symbols[]=file.list();
         for(int i=0;i<symbols.length;i++){
             String symbol=symbols[i].substring(0,symbols[i].indexOf('.'));
-            if(symbol.equals("SQQQ") ||symbol.equals("GME")
-                    ||  symbol.equals("SPY")){
-
-//                    ||symbol.equals("IWM") ||symbol.equals("COIN"))
-
-                continue;
-            }
+//            if(
+//                    symbol.equals("SQQQ") ||symbol.equals("GME")
+//                    ||  symbol.equals("SPY")){
+//
+////                    ||symbol.equals("IWM") ||symbol.equals("COIN"))
+//
+//                continue;
+//            }
 
             companyList.add(symbols[i].substring(0,symbols[i].indexOf('.')));
         }
@@ -112,7 +113,6 @@ public class Tools {
                     int month= Integer.parseInt(date[1]);
                     int year= Integer.parseInt(date[2]);
                     LocalDate ex_date=LocalDate.of(year,month,day);
-
                     LocalDate current_date=LocalDate.now();
 
                     int end_day= Integer.parseInt(Tools.DATE_END.substring(8,10));
@@ -431,17 +431,13 @@ public class Tools {
         if(keys.isEmpty()){return null;}
 
         //    PrintWriter pw=new PrintWriter(file);
-            for(String k: keys){
-//                if(symbol.equals("SPX")){
-//                    pw.println("O:"+symbol+"W"+k+","+hashtable.get(k));
-//                }
-//                else{
+        for(String k: keys){
+
+//            if(!k.startsWith("SPXW")){
                 info+="O:"+k+","+hashtable.get(k)+"\n";
-                //pw.println("O:"+k+","+hashtable.get(k));
-//                }
-            }
-//            pw.println(info);
-//            pw.close();
+//            }
+        }
+
 
         return info;
     }
@@ -500,7 +496,10 @@ public class Tools {
 
     }
 
+
     public static void main(String args[]) {
+
+
         LocalDateTime l= LocalDateTime.now();
         String date=(l.toLocalDate()+"").split("-")[0]+(l.toLocalDate()+"").split("-")[1]+(l.toLocalDate()+"").split("-")[2];
         String time[]=(l.toLocalTime()+"").split(":");

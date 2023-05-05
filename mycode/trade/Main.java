@@ -21,11 +21,11 @@ import org.json.simple.parser.ParseException;
 
 
 public class Main {
-//	public static final String ACCOUNT ="DU6863447";//day trade demo=U10320468
+	public static final String ACCOUNT ="DU6863447";//day trade demo=U10320468
 //	public static final String ACCOUNT ="DU6156906";//demo=U10320468
 
 	//	public static final String ACCOUNT="U10320468";//real=U10320468
-	public static final String ACCOUNT="U10302374";//real new=U10302374
+	//public static final String ACCOUNT="U10302374";//real new=U10302374
 	public  static Hashtable<String, Pair<Double,Double>> symbols_prices_and_vwap_list = new Hashtable<>();
 	public  static Hashtable<String,LinearEquation> linearList=new Hashtable<>();
 	public static ArrayList<Option> create2(ArrayList<String> company_list) throws FileNotFoundException {
@@ -132,7 +132,8 @@ public class Main {
 		//	strategys_0dte.addAll(BuildStrategy.ironCondor(bullList_Odte,bearList_0dte));
 
 		strategys.addAll(BuildStrategy.shortBoxSpread(bullList,bearList));
-	//	strategys.addAll(BuildStrategy.ironCondor(bullList,bearList));
+//		strategys.addAll(BuildStrategy.ironCondor(bullList,bearList));
+//		strategys.addAll(BuildStrategy.longBoxSpread(bullList,bearList));
 		System.out.println("the strategys size : "+strategys.size());
 
 		//////////////////////////////////////////////////////////////////////////////
@@ -140,11 +141,11 @@ public class Main {
 		cancelTimer(client);
 
 
-	//	runLongBox(client,strategys,ordersManagement);
+		//	runLongBox(client,strategys,ordersManagement);
 		runShortBox(client,strategys,ordersManagement);
-	//	runIronIronButterFly(client,strategys,ordersManagement);
-//		runAtomicArbitrage(client,strategys_0dte,ordersManagement);
-	//	runAtomicStrategy(client,strategys,ordersManagement);
+//		runIronIronButterFly(client,strategys,ordersManagement);
+////		runAtomicArbitrage(client,strategys_0dte,ordersManagement);
+//		runAtomicStrategy(client,strategys,ordersManagement);
 	}
 	public static void runAtomicArbitrage(EClientSocket client , ArrayList<Strategy> strategys,OrdersManagement ordersManagement){
 
@@ -195,14 +196,13 @@ public class Main {
 
 			for(int i=0;i<newStrategy.size();i++) {
 				Strategy copy=newStrategy.get(i).deepCopy();
-				if(copy.getCompanySymbol().equals("SPY")){continue;}
 				if(
 						Tools.isValidData(copy)
 								&& linearList.get(copy.getCompanySymbol()).isGood(copy)
 								//	copy.isCreditSpread()
-						//		&& Tools.isTimeToBuy(copy)
+								//		&& Tools.isTimeToBuy(copy)
 								&&  A(copy)
-									&& Tools.isUnderValue(copy)
+								&& Tools.isUnderValue(copy)
 
 								&& !ordersManagement.isFilled(copy.getCompanySymbol()))
 				{
@@ -227,7 +227,7 @@ public class Main {
 		}
 	}
 	public static void runShortBox(EClientSocket client,ArrayList<Strategy> strategies,OrdersManagement ordersManagement){
-		ArrayList<Strategy> shortBoxList= (ArrayList<Strategy>) strategies.stream().filter(s -> s instanceof ShortBoxSpread && s.daysToExpiration()<13).collect(Collectors.toList());
+		ArrayList<Strategy> shortBoxList= (ArrayList<Strategy>) strategies.stream().filter(s -> s instanceof ShortBoxSpread && s.daysToExpiration()<35).collect(Collectors.toList());
 
 		new Thread(new Runnable() {
 			public void run() {
@@ -236,12 +236,19 @@ public class Main {
 				while (true){
 					for(Strategy l :shortBoxList){
 						ShortBoxSpread copy= (ShortBoxSpread) l.deepCopy();
-						if(Tools.isValidData(copy) && isArbitrage(copy)   && !ordersManagement.isFilled(copy.getCompanySymbol())){
+						double stock_price=copy.bearSpread.sell.getOpt().getUnderlying_price();
+						if(Math.abs(stock_price-copy.bearSpread.sell.getOpt().getStrike())<
+								Math.abs(stock_price-copy.bullSpread.sell.getOpt().getStrike())){
+							continue;
+						}
+						if(Tools.isValidData(copy) && isArbitrage(copy)
+								//&& !ordersManagement.isFilled(copy.getCompanySymbol())
+						){
 							int next_order_id=Program.getNextOrderId();
-							client.placeOrder(next_order_id, Transaction.comboContract(copy),Transaction.createOrderBuy_OCA(copy));
+							client.placeOrder(next_order_id, Transaction.comboContract(copy),Transaction.createOrderBuy(copy.price()));
 							Tools.sendedOrder.put(next_order_id,copy.toString());
 							System.out.println("send order for "+copy);
-							if(counter>15){
+							if(counter++>50){
 								client.reqGlobalCancel();
 								Tools.sendedOrder.clear();
 								counter=0;
@@ -261,7 +268,7 @@ public class Main {
 
 	}
 	public static void runLongBox(EClientSocket client,ArrayList<Strategy> strategies,OrdersManagement ordersManagement){
-		ArrayList<Strategy> longBoxList= (ArrayList<Strategy>) strategies.stream().filter(s -> s instanceof LongBoxSpread && s.daysToExpiration()<1).collect(Collectors.toList());
+		ArrayList<Strategy> longBoxList= (ArrayList<Strategy>) strategies.stream().filter(s -> s instanceof LongBoxSpread && s.daysToExpiration()<5).collect(Collectors.toList());
 		new Thread(new Runnable() {
 			public void run() {
 				System.out.println("start long box ");
@@ -270,7 +277,7 @@ public class Main {
 					for(Strategy l :longBoxList){
 						LongBoxSpread copy= (LongBoxSpread) l.deepCopy();
 
-						if(isArbitrage(copy)  &&  (copy.percentage()>2 && (copy.probabilityITM()>0.9)) && !ordersManagement.isFilled(copy.getCompanySymbol())){
+						if(isArbitrage(copy)  &&  (copy.percentage()>2 && (copy.probabilityITM()>0.8)) && !ordersManagement.isFilled(copy.getCompanySymbol())){
 							int next_order_id=Program.getNextOrderId();
 							client.placeOrder(next_order_id, Transaction.comboContract(copy),Transaction.createOrderBuy_OCA(copy));
 							Tools.sendedOrder.put(next_order_id,copy.toString());
@@ -307,7 +314,7 @@ public class Main {
 
 						IronCondor copy= (IronCondor) l.deepCopy();
 						if(copy.probabilityOfMaxProfit()>0.4
-								&& copy.averageOfReturn()>30
+								&& copy.averageOfReturn()>5
 								&& copy.maxLoss()>-20
 								&& !ordersManagement.isFilled(copy.getCompanySymbol())){
 
@@ -589,7 +596,7 @@ public class Main {
 		}
 	}
 	private synchronized static boolean isArbitrage(Strategy strategy){
-		if(strategy.maxLoss()>50){
+		if(strategy.maxLoss()>40  && MyMath.costToClose(strategy)<strategy.maxLoss()){
 			return true;
 		}
 		return false;

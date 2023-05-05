@@ -41,19 +41,11 @@ public class LoadData implements EWrapper {
         LoadData loadData=new LoadData();
         ArrayList<String> symbols=new ArrayList<>();
 
-        symbols.add("AAP");symbols.add("AAPL");symbols.add("ABNB");symbols.add("ADBE");
-        symbols.add("AMD");symbols.add("AMZN");symbols.add("BA");symbols.add("BA");
-        symbols.add("BAC");symbols.add("BOIL");symbols.add("CAT");symbols.add("CCL");
-        symbols.add("COIN");symbols.add("DIA");symbols.add("DIS");symbols.add("ENPH");
-        symbols.add("F");symbols.add("FDX");symbols.add("GLD");symbols.add("GME");
-        symbols.add("GOOG");symbols.add("HYG");symbols.add("IWM");symbols.add("JPM");
-        symbols.add("LCID");symbols.add("META");symbols.add("MO");symbols.add("MRNA");
-        symbols.add("MSFT");symbols.add("NFLX");symbols.add("NIO");symbols.add("NKE");
-        symbols.add("NVDA");symbols.add("PLTR");symbols.add("PYPL");
-        symbols.add("ROKU");symbols.add("SHOP");symbols.add("SLV");symbols.add("SNAP");
-        symbols.add("SQ");symbols.add("SQQQ");symbols.add("TLT");
-        symbols.add("TSLA");symbols.add("UNG");symbols.add("WFC");symbols.add("WMT");
-        symbols.add("XOM");
+
+        symbols.add("BKX");symbols.add("DJX");symbols.add("NDX");symbols.add("RUT");
+        symbols.add("SPX");symbols.add("VIX");symbols.add("XEO");symbols.add("XND");
+        symbols.add("XSP");
+
 
 //
 //        symbols.add("EEM");symbols.add("SLV");symbols.add("FXI");

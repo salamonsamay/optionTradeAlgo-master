@@ -1,5 +1,8 @@
 package mycode.object;
 
+import java.util.ArrayList;
+import java.util.Date;
+
 public class StockObject{
 
     private String optionsTicker;
@@ -101,6 +104,77 @@ public class StockObject{
         this.open_price = open_price;
     }
 
+
+    public static ArrayList<StockObject> filter(ArrayList<StockObject> list){
+        ArrayList<StockObject> newList=new ArrayList<>();
+
+        String start="";
+        for(int i=0;i<list.size();i++) {
+
+            String arr[]=new Date(list.get(i).getTimestamp()).toString().split(" ");
+
+            if(arr[3].equals("10:00:00")){
+                start="10:00:00";
+                System.out.println("10"+i);
+            }
+            else if(arr[3].equals("11:00:00")){
+                System.out.println("11 "+i);
+                start="11:00:00";
+            }
+
+            if(start.equals("10:00:00") && arr[3].equals("15:30:00")
+                    || (start.equals("11:00:00") && arr[3].equals("16:30:00"))){
+                start="";
+                for(int j=i;j<i+390 && j<list.size();j++){
+                    newList.add(list.get(j));
+                }
+                // i=i+390;
+            }
+        }
+        return newList;
+    }
+    public static StockObject[][] filter_(ArrayList<StockObject> list){
+        ArrayList<StockObject> newList=new ArrayList<>();
+
+        String start="";
+        for(int i=0;i<list.size();i++) {
+
+            String arr[]=new Date(list.get(i).getTimestamp()).toString().split(" ");
+
+            if(arr[3].equals("10:00:00")){
+                start="10:00:00";
+            }
+            else if(arr[3].equals("11:00:00")){
+                start="11:00:00";
+            }
+
+            if(start.equals("10:00:00") && arr[3].equals("15:30:00")
+                    || (start.equals("11:00:00") && arr[3].equals("16:30:00"))){
+                start="";
+                for(int j=i;j<i+390 && j<list.size();j++){
+                    newList.add(list.get(j));
+                }
+                // i=i+390;
+            }
+        }
+        int row=0;
+        for(int i=0;i<newList.size();i++){
+            if(i%390==0){
+                row++;
+//                System.out.println("----------------------");
+            }
+//            System.out.println(new Date(newList.get(i).getTimestamp()));
+        }
+        StockObject matrix[][]=new StockObject[row][390];
+        int counter=0;
+        for(int i=0;i<matrix.length;i++){
+            for(int j=0;j<matrix[i].length;j++){
+                matrix[i][j]=newList.get(counter++);
+            }
+        }
+        return  matrix;
+
+    }
     @Override
     public String toString() {
         return "StockObject{" +

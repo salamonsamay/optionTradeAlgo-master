@@ -184,8 +184,9 @@ public class BearSpread implements Strategy,Comparable<Strategy>{
 
 	public static boolean inputIsCorrect(Option opt1,Option opt2) {
 
+		boolean same_prefix=opt1.getTicker().substring(0,opt1.getTicker().length()-15).equals(opt2.getTicker().substring(0,opt2.getTicker().length()-15));
 		if(opt1.getStrike()<=opt2.getStrike() && opt1.getExpiration_date().equals(opt2.getExpiration_date())
-				&& opt1.type().equals(opt2.type()) && opt1.getUnderlying_ticker().equals(opt2.getUnderlying_ticker())) {
+				&& opt1.type().equals(opt2.type()) && opt1.getUnderlying_ticker().equals(opt2.getUnderlying_ticker()) && same_prefix) {
 			return true;
 		}
 		return false;
@@ -251,6 +252,14 @@ public class BearSpread implements Strategy,Comparable<Strategy>{
 		;
 		return info;
 	}
+
+	public static void main(String[] args) {
+		String s="O:BAC230505C00050000";
+		System.out.println(s.substring(0,s.length()-15));
+	}
+
+
+
 
 
 

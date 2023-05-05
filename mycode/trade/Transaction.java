@@ -3,6 +3,7 @@ package mycode.trade;
 import com.ib.client.*;
 import mycode.help.MyMath;
 import mycode.object.Option;
+import mycode.object.SMAObject;
 import mycode.strategy_.*;
 import samples.testbed.orders.OrderSamples;
 
@@ -129,6 +130,13 @@ public class Transaction {
     public static Contract createContract(String symbol){
         Contract contract =new Contract();
         contract.symbol(symbol);
+        if(symbol.equals("SPX") ){
+            contract.secType("IND");
+            contract.primaryExch("XSP");
+            contract.exchange("SMART");
+            contract.currency("USD");
+            return contract;
+        }
       //  contract.conid(609954644);
         contract.secType("STK");
         contract.exchange("SMART");
@@ -136,13 +144,14 @@ public class Transaction {
         if(symbol.equals("META") || symbol.equals("ABNB")){//prevent ambiguous situation
             contract.primaryExch("NASDAQ");
         }
+
         return  contract;
     }
     public static Contract createContractOpt(String symbol){
         Contract contract =new Contract();
         contract.symbol(symbol);
         //  contract.conid(609954644);
-     //   contract.lastTradeDateOrContractMonth("202308");
+        contract.lastTradeDateOrContractMonth("202308");
         contract.secType("OPT");
         contract.exchange("SMART");
         contract.currency("USD");

@@ -167,37 +167,40 @@ public class StockRequest {
     }
 
 
+
     public static void main(String[] args) throws IOException, ParseException {
-//        StockRequest stock_request=new StockRequest("SPY");
-//        stock_request.From("2023-02-01").To("2023-04-10").endPoint();
-//        ArrayList<StockObject> stockObject=stock_request.build();
-//        LinearEquation linearEquation=new LinearEquation();
-//        linearEquation.buildLinearRegression(stockObject);
+        StockRequest stock_request=new StockRequest("SPY");
+        stock_request.From("2023-04-01").To("2023-04-03").endPoint();
+        ArrayList<StockObject> stockObject=stock_request.build();
+        LinearEquation linearEquation=new LinearEquation();
+        linearEquation.buildLinearRegression(stockObject);
+
+      //  System.out.println(linearEquation.predict(new Date().getTime()+1000*60*60*24*0));
+        System.out.println(linearEquation.predict(new Date().getTime()-1000*60*60*24*15));
+        System.out.println(new Date(new Date().getTime()-1000*60*60*24*14));
+
+//       Date d=new Date();
+//        ArrayList<String> arr=Tools.readCompanyFromFile();
+//        ArrayList<LinearEquation> linearList=new ArrayList<>();
 //
-//        System.out.println(linearEquation.predict(new Date().getTime()+1000*60*60*24*10));
-
-       Date d=new Date();
-        ArrayList<String> arr=Tools.readCompanyFromFile();
-        ArrayList<LinearEquation> linearList=new ArrayList<>();
-
-        File file=new File("read_file/output/linear.txt");
-        PrintWriter  pw=new PrintWriter(file);
-
-        for(String a:arr){
-            System.out.println(a);
-            StockRequest stock_request=new StockRequest(a);
-            stock_request.From("2023-02-01").To("2023-04-10").endPoint();
-            ArrayList<StockObject> stockList=stock_request.build();
-            LinearEquation linearEquation=new LinearEquation();
-            linearEquation.buildLinearRegression(stockList);
-            linearList.add(linearEquation);
-            pw.println(linearEquation.getSymbol()+","+linearEquation.getSlope()+","+linearEquation.getYIntercept());
-        }
-        pw.close();
-
-        for(LinearEquation linear:linearList){
-            System.out.println(linear.getSymbol()+"  "+linear.predict(new Date().getTime()));
-        }
+//        File file=new File("read_file/output/linear.txt");
+//        PrintWriter  pw=new PrintWriter(file);
+//
+//        for(String a:arr){
+//            System.out.println(a);
+//            StockRequest stock_request=new StockRequest(a);
+//            stock_request.From("2023-02-01").To("2023-04-10").endPoint();
+//            ArrayList<StockObject> stockList=stock_request.build();
+//            LinearEquation linearEquation=new LinearEquation();
+//            linearEquation.buildLinearRegression(stockList);
+//            linearList.add(linearEquation);
+//            pw.println(linearEquation.getSymbol()+","+linearEquation.getSlope()+","+linearEquation.getYIntercept());
+//        }
+//        pw.close();
+//
+//        for(LinearEquation linear:linearList){
+//            System.out.println(linear.getSymbol()+"  "+linear.predict(new Date().getTime()));
+//        }
     }
 
 

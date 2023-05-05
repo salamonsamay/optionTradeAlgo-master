@@ -1,18 +1,19 @@
 package mycode.my_sql;
 
 import mycode.data.AggregatesRequest;
-import mycode.object.AggregatesObject;
-import mycode.object.EMAObject;
-import mycode.object.RSIObject;
-import mycode.object.SMAObject;
+import mycode.data.StockRequest;
+import mycode.object.*;
 import mycode.technical_indicator.RSIRequest;
 import mycode.technical_indicator.SMARequest;
 import org.json.simple.JSONArray;
 import org.json.simple.parser.ParseException;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Scanner;
 
 public class MySQL {
     public static Connection connection;
@@ -92,7 +93,6 @@ public class MySQL {
 
 
 
-
     }
     public static void insertAggregates(AggregatesObject aggObject){
         //    aggObject.get
@@ -117,9 +117,88 @@ public class MySQL {
         }
 
 
+    }
+
+    public  static void daylydata(File file) throws IOException, ParseException {
+        ArrayList<StockObject> stockObjects=new ArrayList<>();
+        StockRequest stock=new StockRequest("SPY");
+        stockObjects=stock.Timespan("day").From("2022-04-24").To("2023-04-18").endPoint().build();
+        for(StockObject s:stockObjects) {
+            System.out.println(s);
 
 
+            String query = "INSERT INTO spy(date_,open_,high,low,close_) VALUES(?,?,?,?,?)";
+            PreparedStatement prepared = null;
+            try {
+                prepared = connect().prepareStatement(query);
 
+                prepared.setDate(1, new Date(s.getTimestamp()));
+                prepared.setDouble(2, s.getOpen_price());
+                prepared.setDouble(3, s.getHighest_price());
+                prepared.setDouble(4, s.getLowest_price());
+                prepared.setDouble(5, s.getClose_price());
+
+                prepared.executeUpdate();
+                prepared.close();
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+
+
+        }
+
+
+    }
+
+    public static void test() throws IOException, ParseException {
+        ArrayList<StockObject> spyList=new ArrayList<>();
+        StockRequest spy=new StockRequest("SPY");
+        spyList=spy.Timespan("day").From("2022-10-24").To("2023-04-18").endPoint().build();
+
+
+        double gapClose=0;
+        double gapNotClose=0;
+        double total=0;
+        double a=1.005;
+        double b=0.995;
+        int sequnce=0;
+        int max_sequnce=0;
+
+        for(int i=0;i<spyList.size()-1;i++){
+            int j=i+1;
+            if(spyList.get(j).getOpen_price()>spyList.get(i).getClose_price()*a){//is gap up
+                if(spyList.get(j).getLowest_price()<spyList.get(i).getClose_price()){
+                    gapClose++;
+                    total++;
+                    sequnce=0;
+                }
+                else {
+                    gapNotClose++;
+                    total++;
+                    sequnce++;
+                }
+            }
+           else if(spyList.get(j).getOpen_price()<spyList.get(i).getClose_price()*b){//is gap down
+                if(spyList.get(j).getHighest_price()>spyList.get(i).getClose_price()){
+                    gapClose++;
+                    total++;
+                    sequnce=0;
+                }
+                else {
+                    gapNotClose++;
+                    total++;
+                    sequnce++;
+                }
+            }
+           if(max_sequnce<sequnce){
+               max_sequnce=sequnce;
+           }
+        }
+
+        System.out.println("the max sequnce is  "+max_sequnce);
+        System.out.println("gap that close "+gapClose/total);
+        System.out.println("gap that not close "+gapNotClose/total);
+        System.out.println("total "+total);
     }
 
     public static void init(String data) throws IOException, ParseException {
@@ -157,12 +236,14 @@ public class MySQL {
 
     }
     public static void main(String[] args) throws SQLException, ParseException, IOException {
-         for(int i=28;i<30;i++){
-             System.out.println("O:SPY230310P00"+(485+i)+"000");
-             init("O:SPY230310P00"+(385+i)+"000");
-             init("O:SPY230310C00"+(385+i)+"000");
-             System.out.println(i);
-         }
+    test();
+      //  daylydata(new File("C:\\Users\\salam\\OneDrive\\שולחן העבודה\\HistoricalData_1679443188523.csv"));
+//         for(int i=28;i<30;i++){
+//             System.out.println("O:SPY230310P00"+(485+i)+"000");
+//             init("O:SPY230310P00"+(385+i)+"000");
+//             init("O:SPY230310C00"+(385+i)+"000");
+//             System.out.println(i);
+//         }
 //         init("O:SPY230310P00411000");
 //         init("O:SPY230310P00412000");
 //         init("O:SPY230310P00413000");
@@ -170,9 +251,9 @@ public class MySQL {
 
 
 
-       MySQL.connection.close();
+ //       MySQL.connection.close();
 
-        System.out.println(connection.isClosed());
+    //    System.out.println(connection.isClosed());
     }
 
 
