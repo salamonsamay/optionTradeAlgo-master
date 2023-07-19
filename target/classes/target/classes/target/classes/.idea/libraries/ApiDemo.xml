@@ -1,9 +1,0 @@
-<component name="libraryTable">
-  <library name="ApiDemo">
-    <CLASSES>
-      <root url="jar://$PROJECT_DIR$/ApiDemo.jar!/" />
-    </CLASSES>
-    <JAVADOC />
-    <SOURCES />
-  </library>
-</component>

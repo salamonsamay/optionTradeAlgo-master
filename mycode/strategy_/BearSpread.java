@@ -184,9 +184,19 @@ public class BearSpread implements Strategy,Comparable<Strategy>{
 
 	public static boolean inputIsCorrect(Option opt1,Option opt2) {
 
+
+//		if(!(opt1.getGreeks().getDelta()>0.1 && opt1.getGreeks().getDelta()<0.95
+//				&& opt2.getGreeks().getDelta()>0.1 && opt2.getGreeks().getDelta()<0.95)) {
+//			return false;
+//		}
+
 		boolean same_prefix=opt1.getTicker().substring(0,opt1.getTicker().length()-15).equals(opt2.getTicker().substring(0,opt2.getTicker().length()-15));
-		if(opt1.getStrike()<=opt2.getStrike() && opt1.getExpiration_date().equals(opt2.getExpiration_date())
-				&& opt1.type().equals(opt2.type()) && opt1.getUnderlying_ticker().equals(opt2.getUnderlying_ticker()) && same_prefix) {
+
+		if(opt1.getStrike()<=opt2.getStrike()
+				&& opt1.getExpiration_date().equals(opt2.getExpiration_date())
+				&& opt1.type().equals(opt2.type())
+				&& opt1.getUnderlying_ticker().equals(opt2.getUnderlying_ticker())
+				&& same_prefix) {
 			return true;
 		}
 		return false;

@@ -1,6 +1,7 @@
 package mycode.trade;
 
 import mycode.data.StockRequest;
+import mycode.help.Tools;
 import mycode.object.StockObject;
 import org.json.simple.parser.ParseException;
 
@@ -343,10 +344,10 @@ public class BackTest2 {
         for(int i=4;i<list.size();i=i+4 ){
             if(list.get(i-1)>list.get(i) +gap && list.get(i+1)>list.get(i-1)){//if gap down close
                 close++;
-               sequens++;
+                sequens++;
 
             }
-           else if(list.get(i-1)<list.get(i)-gap && list.get(i+2)<list.get(i-1)){//if gap down close
+            else if(list.get(i-1)<list.get(i)-gap && list.get(i+2)<list.get(i-1)){//if gap down close
                 close++;
                 sequens++;
 
@@ -364,16 +365,238 @@ public class BackTest2 {
         System.out.println("max sequens "+max_sequens);
         System.out.println("the gap that close in percent "+close/(not_close+close)*100+"%");
     }
-    public static void main(String[] args) throws IOException, ParseException {
-     //   read(0.001);
-        StockRequest request=new StockRequest("PLTR");
-        ArrayList<StockObject> stockObjects=request.From("2023-02-08").To("2023-05-02").endPoint().build();
+
+    static double avg=0;
+    public static void checkCloseGaps(StockObject[][] stockArray, double gapRange, int dayOfGap,String upOrDown) {
+        //     StockObject[] list=new StockObject[stockArray.length*390];
+        double success=0;
+        double failed=0;
+        double counter=0;
+        for(int i=1;i<stockArray.length-dayOfGap;i++){
+
+            double today_open=stockArray[i][0].getClose_price();
+            double yesterday_close=stockArray[i-1][389].getClose_price();
+            if(yesterday_close+gapRange<today_open && upOrDown.equals("UP")){
+                counter++;
+                if(c(stockArray,i,dayOfGap,yesterday_close,upOrDown)){
+                    success++;
+                }
+                else failed++;
+            }
+            if(yesterday_close>today_open+gapRange && upOrDown.equals("DOWN")){
+                counter++;
+                if( c(stockArray,i,dayOfGap,yesterday_close,upOrDown)){
+                    success++;
+                }
+                else failed++;
+
+            }
+        }
+
+        System.out.println("success "+success);
+        System.out.println("failed "+failed);
+        System.out.println("precent "+Math.round(success/(success+failed)*100)+"%");
+        System.out.println("avg "+avg/counter);
+    }
+
+    public static double checkCloseGapsPercent(StockObject[][] stockArray, double percent, int dayOfGap,String upOrDown) {
+        //     StockObject[] list=new StockObject[stockArray.length*390];
+        double success=0;
+        double failed=0;
+        double counter=0;
+
+        for(int i=1;i<stockArray.length-dayOfGap;i++){
+
+            double today_open=stockArray[i][0].getClose_price();
+            double yesterday_close=stockArray[i-1][389].getClose_price();
+            if(yesterday_close*percent<today_open && upOrDown.equals("UP")){
+                counter++;
+                if(c(stockArray,i,dayOfGap,yesterday_close,upOrDown)){
+                    success++;
+                    //    System.out.println("the gap close from "+ yesterday_close +" to "+today_open);
+                }
+                else failed++;
+            }
+            if(yesterday_close>today_open*percent && upOrDown.equals("DOWN")){
+                counter++;
+                if( c(stockArray,i,dayOfGap,yesterday_close,upOrDown)){
+                    success++;
+                    //      System.out.println("the gap close from "+ yesterday_close +" to "+today_open);
+                }
+                else failed++;
+
+            }
+        }
+
+        System.out.println(stockArray[0][0].getOptionsTicker());
+        System.out.println("success "+success);
+        System.out.println("failed "+failed);
+        System.out.println("precent "+Math.round(success/(success+failed)*100)+"%");
+//        System.out.println("avg "+avg/counter);
+        return percent;
+    }
+
+    private  static  boolean c(StockObject[][] list ,int i_,int dayOfGap,double yester_day_close,String status){
+        double max=0;
+        if(status.equals("UP")){
+            for(int i=i_;i<i_+dayOfGap;i++){
+                for(int j=1;j<390;j++){
+                    if(list[i][j].getClose_price()<yester_day_close){
+                        avg+=max;
+                        //          System.out.println("the gap close from "+yester_day_close +" to "+list[i][j].getClose_price());
+                        return true;
+                    }
+                    if(list[i][j].getClose_price()-yester_day_close>max){
+                        max=list[i][j].getClose_price()-yester_day_close;
+                    }
+                }
+            }
+        }
+        else if(status.equals("DOWN")){
+            for(int i=i_;i<i_+dayOfGap;i++){
+                for(int j=1;j<390;j++){
+                    if(list[i][j].getClose_price()>yester_day_close){
+                        avg+=max;
+                        //             System.out.println("the gap close from "+yester_day_close +" to "+list[i][j].getClose_price());
+
+                        return true;
+                    }
+                    if(yester_day_close-list[i][j].getClose_price()>max){
+                        max=yester_day_close-list[i][j].getClose_price();
+                    }
+                }
+            }
+        }
+        avg+=max;
+        return false;
+    }
+    private  static  boolean c2(StockObject[][] list ,int i_,int dayOfGap,double yester_day_close,String status){
+        double min=1000000000;
+        double max=0;
+        double avg=0;
+        for(int j=0;j<10;j++) {
+            if(min>list[i_][j].getClose_price()){
+                min=list[i_][j].getClose_price();
+            }
+            if(max<list[i_][j].getClose_price()){
+                max=list[i_][j].getClose_price();
+            }
+        }
+
+        if(status.equals("UP")){
+
+            if(list[i_+dayOfGap-1][389].getClose_price()<max)
+                return true;
+
+        }
+        else if(status.equals("DOWN")){
+
+            if(list[i_+dayOfGap-1][389].getClose_price()>min){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * CHECK IF HAVE A GAP THAT NOT CLOSE
+     * @param s COMPANY SYMBOL
+     * @param numOfLastDay THE LAST DAY RANGE THAT CHECKING
+     * @param percent
+     * @return TRUE IF CLOSE FALSE IF NOT CLOSE
+     * @throws IOException
+     * @throws ParseException
+     */
+    public  static String  lastDayGap(String s,int numOfLastDay,double percent) throws IOException, ParseException {
+
+        System.out.println("start with "+s);
+        StockRequest request=new StockRequest(s);
+        ArrayList<StockObject> stockObjects=request.From("2023-05-30").To("2023-06-02").endPoint().build();
+//        System.out.println("from "+(new Date(new Date().getTime()-(1000*60*60*24*numOfLastDay))));
+//        System.out.println("to "+(new Date(new Date().getTime())));
+        StockObject[][] array=StockObject.filter_(stockObjects);
+
+        try {
+            double close =array[0][389].getClose_price();
+            double open=array[1][0].getClose_price();
+
+            if(close*percent<open){//up
+                for(int i=1;i<array.length;i++ ){
+                    for(int j=0;j<array[i].length;j++){
+                        if(array[i][j].getClose_price()<close){
+                            return null;
+                        }
+                    }
+                }
+                System.out.println(s+" have open gap up that that not close("+close+")  from "+new Date(array[1][389].getTimestamp()) );
+                return s+",UP";
+            }
+            else if(close>open*percent){//down
+                for(int i=1;i<array.length;i++ ){
+                    for(int j=0;j<array[i].length;j++){
+                        if(array[i][j].getClose_price()>close){
+                            return null;
+                        }
+                    }
+                }
+                System.out.println(s+" have open gap down that that not close("+close+")  from "+new Date(array[1][389].getTimestamp()) );
+                return s+",DOWN";
+
+            }
+
+
+        }catch (ArrayIndexOutOfBoundsException e){
+            e.printStackTrace();
+            return null;
+        }
+
+
+        return null;
+    }
+    public static void main(String[] args) throws IOException, ParseException, InterruptedException {
+//        StockRequest request=new StockRequest("AMD");
+//        ArrayList<StockObject> stockObjects=request.From("2022-01-16").To("2023-05-29").endPoint().build();
+
+
 //
 //      //  StockObject.filter_(stockObjects);
 //        //  BackTest2.check(stockObjects,0,10,20);
 ////        double r=BackTest2.M15(stockObjects,0,15,30);
 ////        System.out.println(r);
-            closeGap(stockObjects,0.2,2);
+        //  closeGap(stockObjects,0.2,7);
+   //     checkCloseGapsPercent(StockObject.filter_(stockObjects),1.01,3,"DOWN");
+        ArrayList<String> symbolList=new ArrayList<>();
+        symbolList.add("NFLX");symbolList.add("QQQ");symbolList.add("SPY");
+        symbolList.add("TSLA");symbolList.add("META");symbolList.add("GOOG");
+        symbolList.add("MSFT");symbolList.add("NVDA");
+        symbolList.add("ROKU");symbolList.add("XLE");
+        symbolList.add("BAC");symbolList.add("PYPL");
+        symbolList.add("GLD");symbolList.add("IWM");
+        symbolList.add("AAPL");symbolList.add("AMD");
+        symbolList.add("TLT");symbolList.add("DIA");
+        symbolList.add("JPM");symbolList.add("ADBE");
+        symbolList.add("BA");symbolList.add("MRNA");
+        symbolList.add("XOM");symbolList.add("SHOP");
+        ArrayList<String> companies=new ArrayList<>();
+        for(String s:symbolList){
+            String str=lastDayGap(s,3,1.00);
+            if(str!=null){companies.add(str);}
+            Thread.sleep(13000);
+        }
+        for(String company: companies){
+            String result[]=company.split(",");
+            StockRequest request2=new StockRequest(result[0]);
+            ArrayList<StockObject> stockObjects2=request2.From("2022-01-16").To("2023-05-29").endPoint().build();
+
+            checkCloseGapsPercent(StockObject.filter_(stockObjects2),1.01,3,result[1]);
+
+        }
+
+
+
+
+
+
     }
 }
 

@@ -39,22 +39,7 @@ public class LoadData implements EWrapper {
         //   ArrayList<String > list=Init.read2();
 //
         LoadData loadData=new LoadData();
-        ArrayList<String> symbols=new ArrayList<>();
-
-
-        symbols.add("BKX");symbols.add("DJX");symbols.add("NDX");symbols.add("RUT");
-        symbols.add("SPX");symbols.add("VIX");symbols.add("XEO");symbols.add("XND");
-        symbols.add("XSP");
-
-
-//
-//        symbols.add("EEM");symbols.add("SLV");symbols.add("FXI");
-//        symbols.add("GDX");symbols.add("EFA");symbols.add("EWZ");
-//        symbols.add("EWC");symbols.add("KWEB");symbols.add("LQD");
-//        symbols.add("BKLN");
-
-
-
+        ArrayList<String> symbols=Tools.readCompanyFromFile();
 
         loadData.run(symbols);
     }
@@ -100,29 +85,35 @@ public class LoadData implements EWrapper {
             while(!isEnd){
                 Thread.sleep(100);
             }
+
+
             isEnd=false;
-            if(!isValid){isValid=true;continue;}
+            if(!isValid){
+                isValid=true;
+                System.out.println("continue");
+                continue;
+            }
 //
             System.out.println("-----");
             File f=new File(Tools.PATH+symbol+".txt");
             try {
                 System.out.println("start write "+symbol);
-
                 System.out.println();
                 Scanner in=new Scanner(f);
                 String old_info="";
+                boolean oldInfoExists=false;
                 while(in.hasNextLine()){
                     old_info+=in.nextLine()+"\n";
+                    oldInfoExists=true;
                 }
-
                 in.close();
+                if(oldInfoExists){
+                    System.out.println("end write old info "+symbol);
+                }
                 PrintWriter pw=new PrintWriter(f);
-                System.out.println("end write "+symbol);
-                System.out.println("start convert "+symbol);
                 String new_info=Tools.extract_and_write_contractID(symbol);
 
                 pw.print(old_info+new_info);
-                //pw.println(new_info);
                 data="";
                 System.out.println("end convert "+symbol);
                 in.close();
@@ -167,7 +158,7 @@ public class LoadData implements EWrapper {
             sleep(1000);
         }
 
-        m_s.reqContractDetails(251, Transaction.createContract(symbol));
+        m_s.reqContractDetails(251, Transaction.createContractOpt(symbol));
         while(!isEnd){
             try {
                 Thread.sleep(2000);
@@ -218,13 +209,18 @@ public class LoadData implements EWrapper {
         String error8="-1 | 2103 | Market data farm connection is broken:usfarm";
         String error9="-1 | 1100 | Connectivity between IB and TWS has been lost.";
         String error10="-1 | 2105 | HMDS data farm connection is broken:ushmds";
+       // String error11="-1 | 2172 | The version of the application you are running, 1018.1, needs to be upgraded, as it will be desupported on 20230718. The minimum supported version at that time will be 1019.2.";
 
         if(!value.equals(error1) && !value.equals(error2) && !value.equals(error3) && !value.equals(error4)
                 && !value.equals(error5) && !value.equals(error6) && !value.equals(error7)
-                && !value.equals(error8) && !value.equals(error9) && !value.equals(error10)){
+                && !value.equals(error8) && !value.equals(error9) && !value.equals(error10)
+              ){
             isValid=false;
             isEnd=true;
         }
+
+
+
 
     }
 

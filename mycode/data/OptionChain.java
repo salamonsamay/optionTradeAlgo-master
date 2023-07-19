@@ -187,7 +187,7 @@ public class OptionChain extends  Thread{
                 }
 
                 try {
-                    if (option.getExercise_style().equals("european")) {
+                    if (option.getExercise_style().equals("european") ) {
                         option.setGreeks(new Greeks(0, 0, 0, 0));
                     } else {
                         option.setUnderlying_price(Double.parseDouble(underlying_asset.get("price") + ""));

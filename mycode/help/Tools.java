@@ -23,9 +23,9 @@ public class Tools {
     //contain  the  strategy info  that sended
     public  static Hashtable<Integer,String> sendedOrder=new Hashtable<>();
 
-    public static final String PATH ="read_file/all_symbol/";
-    public static  String  DATE_START = "2023-05-03";
-    public static  String  DATE_END = "2023-06-03";
+    public static final String PATH ="read_file/liquid/";
+    public static  String  DATE_START = "2023-07-17";
+    public static  String  DATE_END = "2023-07-29";
 
 
     public static ArrayList<String> readCompanyFromFile(){
@@ -33,18 +33,12 @@ public class Tools {
         File file =new File(PATH);
 
         String symbols[]=file.list();
+        boolean flag=false;
         for(int i=0;i<symbols.length;i++){
             String symbol=symbols[i].substring(0,symbols[i].indexOf('.'));
-//            if(
-//                    symbol.equals("SQQQ") ||symbol.equals("GME")
-//                    ||  symbol.equals("SPY")){
-//
-////                    ||symbol.equals("IWM") ||symbol.equals("COIN"))
-//
-//                continue;
-//            }
 
-            companyList.add(symbols[i].substring(0,symbols[i].indexOf('.')));
+                companyList.add(symbols[i].substring(0,symbols[i].indexOf('.')));
+
         }
 
         return companyList;
@@ -434,7 +428,7 @@ public class Tools {
         for(String k: keys){
 
 //            if(!k.startsWith("SPXW")){
-                info+="O:"+k+","+hashtable.get(k)+"\n";
+            info+="O:"+k+","+hashtable.get(k)+"\n";
 //            }
         }
 

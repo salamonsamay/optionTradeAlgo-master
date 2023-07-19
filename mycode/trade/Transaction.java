@@ -151,7 +151,7 @@ public class Transaction {
         Contract contract =new Contract();
         contract.symbol(symbol);
         //  contract.conid(609954644);
-        contract.lastTradeDateOrContractMonth("202308");
+        contract.lastTradeDateOrContractMonth("202307");
         contract.secType("OPT");
         contract.exchange("SMART");
         contract.currency("USD");

@@ -128,10 +128,11 @@ public class StockRequest {
         JSONObject json= (JSONObject) obj;
         JSONArray jsonArray=new JSONArray();
 
-        if(json.get("next_url")==null){
-            jsonArray= (JSONArray) json.get("results");
-            return jsonArray;
-        }
+//        if(json.get("next_url")==null){
+//            jsonArray= (JSONArray) json.get("results");
+//            return jsonArray;
+//        }
+
         while(json.get("next_url")!=null){
             System.out.println(url);
             JSONArray temp= (JSONArray) json.get("results");
@@ -142,6 +143,14 @@ public class StockRequest {
             obj=new JSONParser().parse(result);
             json= (JSONObject) obj;
         }
+        JSONArray temp= (JSONArray) json.get("results");
+
+        if(json.get("next_url")==null){
+            for(int i=0;i<temp.size();i++){
+                jsonArray.add(temp.get(i));
+            }
+        }
+//        System.out.println(jsonArray.size());
         return jsonArray;
     }
 
