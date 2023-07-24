@@ -48,7 +48,7 @@ public class BoxSpreadTesting {
         assertEquals(9.5,longBox.price(),delta);
         assertEquals(50-commission,longBox.maxProfit(),delta);//(10-9.5)*100
         assertEquals(50-commission,longBox.maxLoss(),delta);//(10-9.5)*100
-   //     assertEquals((5.26315789),longBox.percentage(),delta);
+        assertEquals(4.42105263157,longBox.percentage(),delta);
         System.out.println(longBox.price());
         System.out.println(longBox.percentage());
 

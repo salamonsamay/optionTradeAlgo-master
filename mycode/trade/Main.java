@@ -21,82 +21,9 @@ import org.json.simple.parser.ParseException;
 
 
 public class Main {
-	public static final String ACCOUNT ="DU6863447";//day trade demo=U10320468
-	//public static final String ACCOUNT ="DU6156906";//demo=U10320468
 
-	//	public static final String ACCOUNT="U10320468";//real=U10320468
-	//public static final String ACCOUNT="U10302374";//real new=U10302374
-	public  static Hashtable<String, Pair<Double,Double>> symbols_prices_and_vwap_list = new Hashtable<>();
-	public  static Hashtable<String,LinearEquation> linearList=new Hashtable<>();
-	public static ArrayList<Option> create2(ArrayList<String> company_list) throws FileNotFoundException {
 
-		ArrayList<OptionChain>option_chain_list=new ArrayList<>();
-		ExecutorService pool = Executors.newFixedThreadPool(100);
-		for(int i=0;i<company_list.size();i++) {
-			if(!Tools.haveExDividend(company_list.get(i))) {//not have a dividend  until the expration
-				symbols_prices_and_vwap_list.put(company_list.get(i), new Pair<>(0.0, 0.0));
-				OptionChain option_chain = new OptionChain(company_list.get(i));
-				option_chain
-						.Limit("250")
-						.Expiriation_date_gt(Tools.DATE_START)
-						.Expiriation_date_lt(Tools.DATE_END)
-						.endPoint();
 
-				option_chain_list.add(option_chain);
-				pool.execute(option_chain);
-			}
-///////////////////////////////////////////////////////////////////////////////
-//			SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
-//			Calendar calendar = Calendar.getInstance();
-//			calendar.add(Calendar.DAY_OF_YEAR, 1);
-//			Date tomorrow = calendar.getTime();
-//			calendar.add(Calendar.DAY_OF_YEAR, -2);
-//			Date yesterday = calendar.getTime();
-///////////////////////////////////////////////////////////////////////////////////
-//			OptionChain option_chain2=new OptionChain(company_list.get(i));
-//			option_chain2
-//					.Limit("250")
-//					.Expiriation_date_gt(formatter.format(yesterday))
-//					.Expiriation_date_lt(formatter.format(tomorrow))
-//					.endPoint();
-//
-//			option_chain_list.add(option_chain2);
-//			pool.execute(option_chain2);
-		}
-
-		pool.shutdown();
-		while(!pool.isTerminated()) {}
-
-		ArrayList<Option> options_list=new ArrayList<>();
-
-		for(int i=0;i<option_chain_list.size();i++){
-			options_list.addAll(option_chain_list.get(i).option_list);
-			option_chain_list.get(i).updateProcess();
-		}
-
-		return options_list;
-
-	}
-//	public static ArrayList<OptionContract> create(ArrayList<String> company_list){
-//
-//		ArrayList<OptionContract>allCompanyOptions=new ArrayList<>();
-//		ExecutorService pool = Executors.newFixedThreadPool(250);
-//		for(int i=0;i<company_list.size();i++) {
-//			OptionContract contract=new OptionContract(company_list.get(i));
-//			contract
-//					.Limit("1000")
-//					.Expiriation_date_lt(Tools.DATE_END)
-//					.Expiriation_date_gt(Tools.DATE_START)
-//					.endPoint();
-//			allCompanyOptions.add(contract);
-//			pool.execute(allCompanyOptions.get(i));
-//		}
-//		pool.shutdown();
-//		while(!pool.isTerminated()) {}
-//
-//		return allCompanyOptions;
-//
-//	}
 
 	public static void loadProgram(Program program) throws  IOException, ParseException, InterruptedException {
 
@@ -104,7 +31,7 @@ public class Main {
 		OrdersManagement ordersManagement=program.ordersManagement;
 		ArrayList<String> companyList=Tools.readCompanyFromFile();
 		ArrayList<Strategy> strategys=new ArrayList<>();
-		ArrayList<Option> optionList=create2(companyList);
+		ArrayList<Option> optionList=Tools.getOptions(companyList);
 //		System.out.println("updateProccess linear");
 //		Tools.updateLinearList();
 //		updateVWAP(program);
@@ -198,7 +125,6 @@ public class Main {
 				Strategy copy=newStrategy.get(i).deepCopy();
 				if(
 						Tools.isValidData(copy)
-								&& linearList.get(copy.getCompanySymbol()).isGood(copy)
 								//	copy.isCreditSpread()
 								//		&& Tools.isTimeToBuy(copy)
 								&&  A(copy)
@@ -277,7 +203,7 @@ public class Main {
 					for(Strategy l :longBoxList){
 						LongBoxSpread copy= (LongBoxSpread) l.deepCopy();
 
-						if(isArbitrage(copy)  &&   !ordersManagement.isFilled(copy.getCompanySymbol())){
+						if(copy.isDeepInTheMoney() && isArbitrage(copy)  &&   !ordersManagement.isFilled(copy.getCompanySymbol())){
 							int next_order_id=Program.getNextOrderId();
 							client.placeOrder(next_order_id, Transaction.comboContract(copy),Transaction.createOrderBuy(copy.price()));
 							Tools.sendedOrder.put(next_order_id,copy.toString());
@@ -292,7 +218,6 @@ public class Main {
 							} catch (InterruptedException e) {
 								throw new RuntimeException(e);
 							}
-
 						}
 					}
 				}
@@ -541,39 +466,7 @@ public class Main {
 
 
 	}
-	public static void updateVWAP(Program p){
-		new Thread(new Runnable() {
 
-			public void run() {
-				while (true){
-					for (String key : symbols_prices_and_vwap_list.keySet()) {
-						p.reqHistoricalData_(key);
-						while (!Program.historicalFlag){
-							try {
-								Thread.sleep(1000);
-							} catch (InterruptedException e) {
-								throw new RuntimeException(e);
-							}
-						}
-						VWAP.calculateVWAP(Program.historical);
-						//	System.out.println(key);
-//						VWAP.print();
-//						System.out.println();
-						symbols_prices_and_vwap_list.put(key,new Pair<>(VWAP.lastPrice,VWAP.vwap));
-						Program.historical="";
-						Program.historicalFlag=false;
-					}
-					try {
-						Thread.sleep(60*1000);
-					} catch (InterruptedException e) {
-						throw new RuntimeException(e);
-					}
-				}
-
-			}
-		}).start();
-
-	}
 	///////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	private  synchronized static boolean A(Strategy strategy){

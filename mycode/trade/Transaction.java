@@ -1,6 +1,7 @@
 package mycode.trade;
 
 import com.ib.client.*;
+import mycode.help.Configurations;
 import mycode.help.MyMath;
 import mycode.object.Option;
 import mycode.object.SMAObject;
@@ -20,7 +21,7 @@ public class Transaction {
 //		order.clientId(0);
 
         order.orderId((int)(Math.random()*1000000)+10);
-        order.account(Main.ACCOUNT);
+        order.account(Configurations.ACCOUNT);
         order.totalQuantity(Decimal.ONE);
         order.action(Types.Action.BUY);
         order.orderType(OrderType.LMT);
@@ -32,7 +33,7 @@ public class Transaction {
         Order order=new Order();
         //	order.clientId(0);
 
-        order.account(Main.ACCOUNT);
+        order.account(Configurations.ACCOUNT);
         order.totalQuantity(Decimal.get(1));
         order.action(Types.Action.BUY);
         order.orderType(OrderType.LMT);
@@ -44,7 +45,7 @@ public class Transaction {
         List<Order> o=new LinkedList<>();
         //	order.clientId(0);
 
-        order.account(Main.ACCOUNT);
+        order.account(Configurations.ACCOUNT);
         order.totalQuantity(Decimal.get(1));
         order.action(Types.Action.BUY);
         order.orderType(OrderType.LMT);
@@ -60,7 +61,7 @@ public class Transaction {
         Order order=new Order();
         //	order.clientId(0);
 
-        order.account(Main.ACCOUNT);
+        order.account(Configurations.ACCOUNT);
         order.totalQuantity(Decimal.get(10));
         order.action(Types.Action.BUY);
         order.orderType(OrderType.LMT);
@@ -95,7 +96,7 @@ public class Transaction {
     public static Order createOrderSell(double limitPrice){
         Order order=new Order();
 //		order.clientId(0);
-        order.account(Main.ACCOUNT);
+        order.account(Configurations.ACCOUNT);
 
         order.totalQuantity(Decimal.ONE);
         order.action(Types.Action.SELL);

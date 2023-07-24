@@ -117,6 +117,15 @@ public class LongBoxSpread implements  Strategy{
     }
 
 
+    public  boolean isDeepInTheMoney(){
+        if((this.bearSpread.sell.getOpt().getGreeks().getDelta()<0.1
+                && this.bearSpread.buy.getOpt().getGreeks().getDelta()>0.9)
+                || (this.bullSpread.sell.getOpt().getGreeks().getDelta()<0.1
+                &&  this.bullSpread.buy.getOpt().getGreeks().getDelta()>0.9)){
+            return  true;
+        }
+        return  false;
+    }
     public int compareTo(Strategy s) {
         if(this.averageOfReturn()>s.averageOfReturn()) {return 1;}
         if(this.averageOfReturn()<s.averageOfReturn()) {return -1;}

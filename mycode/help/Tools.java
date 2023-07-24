@@ -6,10 +6,14 @@ import java.io.PrintWriter;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 
 import mycode.data.LoadData;
+import mycode.data.OptionChain;
 import mycode.object.Option;
+import mycode.object.Pair;
 import mycode.strategy_.*;
 import mycode.trade.Main;
 
@@ -45,25 +49,38 @@ public class Tools {
 
     }
 
+    public static ArrayList<Option> getOptions(ArrayList<String> company_list) throws FileNotFoundException {
 
-    public  static  void updateLinearList(){
-        File file=new File("read_file/output/linear.txt");
-        try {
-            Scanner in =new Scanner(file);
-            while (in.hasNextLine()){
-                String str[]=in.nextLine().split(",");
-                LinearEquation l=new LinearEquation();
-                l.setSymbol(str[0]);
-                l.setSlope(Double.parseDouble(str[1]));
-                l.setyIntercept(Double.parseDouble(str[2]));
-                Main.linearList.put(str[0],l);
+        ArrayList<OptionChain>option_chain_list=new ArrayList<>();
+        ExecutorService pool = Executors.newFixedThreadPool(100);
+        for(int i=0;i<company_list.size();i++) {
+            if(!Tools.haveExDividend(company_list.get(i))) {//not have a dividend  until the expration
+                OptionChain option_chain = new OptionChain(company_list.get(i));
+                option_chain
+                        .Limit("250")
+                        .Expiriation_date_gt(Tools.DATE_START)
+                        .Expiriation_date_lt(Tools.DATE_END)
+                        .endPoint();
+
+                option_chain_list.add(option_chain);
+                pool.execute(option_chain);
             }
-            in.close();
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
+
+        }
+        pool.shutdown();
+        while(!pool.isTerminated()) {}
+
+        ArrayList<Option> options_list=new ArrayList<>();
+
+        for(int i=0;i<option_chain_list.size();i++){
+            options_list.addAll(option_chain_list.get(i).option_list);
+            option_chain_list.get(i).updateProcess();
         }
 
+        return options_list;
+
     }
+
     public static boolean isValidData(Strategy strategy){
         if(strategy instanceof  BearSpread ){
             return isValidData(((BearSpread) strategy).sell.getOpt())
@@ -94,7 +111,6 @@ public class Tools {
         }
         return true;
     }
-
     public static boolean haveExDividend(String symbol) throws FileNotFoundException {
         File file=new File("read_file/ex_dividend/ex_dividend.txt");
         Scanner in=new Scanner(file);
@@ -157,35 +173,6 @@ public class Tools {
         }
         throw new RuntimeException();
     }
-    public static boolean isTimeToBuy(Strategy strategy){
-        if(strategy instanceof BullSpread){
-            String symbol=strategy.getCompanySymbol();
-            double price=Main.symbols_prices_and_vwap_list.get(symbol).getFirst();
-            double vwap=Main.symbols_prices_and_vwap_list.get(symbol).getSecond();
-            if(price*1.05<vwap || price+2<vwap){
-                //       System.out.println("at isTimetoBuy function " +true);
-                return true;
-            }else {
-                //         System.out.println("at isTimetoBuy function " +false);
-                return false;
-            }
-        }
-        if(strategy instanceof BearSpread){
-            String symbol=strategy.getCompanySymbol();
-            double price=Main.symbols_prices_and_vwap_list.get(symbol).getFirst();
-            double vwap=Main.symbols_prices_and_vwap_list.get(symbol).getSecond();
-            if(price<1.05*vwap || price>vwap+2){
-                //         System.out.println("at isTimetoBuy function " +true);
-                return true;
-            }else {
-                //           System.out.println("at isTimetoBuy function " +false);
-                return false;
-            }
-        }
-        else throw new RuntimeException();
-
-    }
-
 
     public static void print(ArrayList<Strategy> list){
         for(Strategy value:list){
@@ -289,9 +276,6 @@ public class Tools {
     }
 
 
-
-
-
     /**
      * remove the option that  have no contract id
      * and remove  ticker that lengh above 16
@@ -344,7 +328,6 @@ public class Tools {
         return filter;
     }
 
-
     public static void updateAll(ArrayList<Option> list) {
 
         for(Option l:list) {
@@ -372,7 +355,6 @@ public class Tools {
             }).start();
         }
     }
-
 
     public static void updateRSI(ArrayList<Option> list ){
         for(Option l:list) {
