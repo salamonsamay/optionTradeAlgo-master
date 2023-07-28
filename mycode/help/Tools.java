@@ -29,7 +29,7 @@ public class Tools {
 
     public static final String PATH ="read_file/liquid/";
     public static  String  DATE_START = "2023-07-17";
-    public static  String  DATE_END = "2023-07-29";
+    public static  String  DATE_END = "2023-09-29";
 
 
     public static ArrayList<String> readCompanyFromFile(){
@@ -42,6 +42,7 @@ public class Tools {
             String symbol=symbols[i].substring(0,symbols[i].indexOf('.'));
 
                 companyList.add(symbols[i].substring(0,symbols[i].indexOf('.')));
+
 
         }
 

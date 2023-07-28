@@ -60,7 +60,7 @@ public class Main {
 
 		//strategys.addAll(BuildStrategy.shortBoxSpread(bullList,bearList));
 		//	strategys.addAll(BuildStrategy.ironCondor(bullList,bearList));
-		strategys.addAll(BuildStrategy.longBoxSpread(bullList,bearList));
+	//	strategys.addAll(BuildStrategy.longBoxSpread(bullList,bearList));
 		System.out.println("the strategys size : "+strategys.size());
 
 		//////////////////////////////////////////////////////////////////////////////
@@ -68,16 +68,16 @@ public class Main {
 		cancelTimer(client);
 
 
-		runLongBox(client,strategys,ordersManagement);
+	//	runLongBox(client,strategys,ordersManagement);
 		//runShortBox(client,strategys,ordersManagement);
 //		runIronIronButterFly(client,strategys,ordersManagement);
-////		runAtomicArbitrage(client,strategys_0dte,ordersManagement);
+		runAtomicArbitrage(client,strategys,ordersManagement);
 //		runAtomicStrategy(client,strategys,ordersManagement);
 	}
 	public static void runAtomicArbitrage(EClientSocket client , ArrayList<Strategy> strategys,OrdersManagement ordersManagement){
 
-		ArrayList<Strategy> dte0= (ArrayList<Strategy>) strategys.stream().filter(strategy -> strategy.daysToExpiration()==0).collect(Collectors.toList());
-		if(dte0.size()<100){
+		ArrayList<Strategy> filterd= (ArrayList<Strategy>) strategys.stream().filter(strategy -> strategy.probabilityOfMaxProfit()<0.98 ).collect(Collectors.toList());
+		if(filterd.size()<100){
 			System.out.println("0 DTE");
 			return;
 		}
@@ -90,7 +90,7 @@ public class Main {
 						Strategy copy=strategys.get(i).deepCopy();
 						if( isArbitrage(copy) && !ordersManagement.isFilled(copy.getCompanySymbol())){
 							int next_order_id=Program.getNextOrderId();
-							client.placeOrder(next_order_id, Transaction.comboContract(copy),Transaction.createOrderBuy_OCA(copy));
+							client.placeOrder(next_order_id, Transaction.comboContract(copy),Transaction.createOrderBuy(copy.price()));
 							Tools.sendedOrder.put(next_order_id,copy.toString());
 							System.out.println("send order for "+copy);
 							if(counter>100){
