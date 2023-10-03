@@ -86,10 +86,7 @@ public class IronCondor implements Strategy,Comparable<Strategy>{
 		return (this.bear_call.isCreditSpread() && this.bull_put.isCreditSpread());
 	}
 
-	@Override
-	public double percentage() {
-		return 0;
-	}
+
 
 
 	public static boolean inputIsCorrect(BullSpread bull_Put, BearSpread bear_call) {
@@ -97,6 +94,7 @@ public class IronCondor implements Strategy,Comparable<Strategy>{
 		boolean compareStrike=bull_Put.sell.getOpt().getStrike()<=bear_call.sell.getOpt().getStrike();
 		boolean sameDate=bull_Put.sell.getOpt().getExpiration_date().equals(bear_call.sell.getOpt().getExpiration_date());
 		boolean sameSymbol=bull_Put.sell.getOpt().getUnderlying_ticker().equals(bear_call.sell.getOpt().getUnderlying_ticker());
+//		boolean sameStrike=Math.abs( bull_Put.buy.getOpt().getStrike()-bull_Put.sell.getOpt().getStrike())==Math.abs(bear_call.sell.getOpt().getStrike()-bear_call.buy.getOpt().getStrike());
 
 		if(compareStrike && compareType && sameDate && sameSymbol) {return true;	}
 		return false;

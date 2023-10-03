@@ -25,6 +25,10 @@ public class AggregatesObject {
         this.open_price = open_price;
     }
 
+    public AggregatesObject() {
+
+    }
+
     public String getOptionsTicker() {
         return optionsTicker;
     }
@@ -97,7 +101,18 @@ public class AggregatesObject {
         this.open_price = open_price;
     }
 
-
-
-
+    @Override
+    public String toString() {
+        return "AggregatesObject{" +
+                "optionsTicker='" + optionsTicker + '\'' +
+                ", vwap=" + vwap +
+                ", close_price=" + close_price +
+                ", timestamp=" + timestamp +
+                ", volume=" + volume +
+                ", highest_price=" + highest_price +
+                ", lowest_price=" + lowest_price +
+                ", number_of_transactions=" + number_of_transactions +
+                ", open_price=" + open_price +
+                '}';
+    }
 }

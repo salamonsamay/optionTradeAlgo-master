@@ -1,6 +1,6 @@
 package mycode.object;
 
-import mycode.technical_indicator.Indicator;
+import org.json.simple.JSONObject;
 
 public interface Option {
 
@@ -42,6 +42,7 @@ public interface Option {
 	double getUnderlying_price();
 	String type();
 
+	void update(JSONObject jsonObject);
 	void update(Option opt);
 	boolean update();
 
@@ -56,14 +57,11 @@ public interface Option {
 	double getVolume();
 	void setVolume(double vwap);
 
-	Indicator getIndicator();
-
-	void setIndicator(Indicator indicator);
 
 
 	Option deepCopy();
 
-
+	boolean equals(Option obj);
 
 	int daysToExpiration();
 

@@ -49,9 +49,9 @@ public class Transaction {
         order.totalQuantity(Decimal.get(1));
         order.action(Types.Action.BUY);
         order.orderType(OrderType.LMT);
-     //   order.lmtPrice(MyMath.midPointPrice(strategy));
+        //   order.lmtPrice(MyMath.midPointPrice(strategy));
         order.lmtPrice(strategy.price());
-       // order.lmtPrice(strategy.midPointPrice());
+        // order.lmtPrice(strategy.midPointPrice());
         o.add(order);
         OrderSamples.OneCancelsAll(strategy.getCompanySymbol(), o,1);
         return order;
@@ -138,7 +138,7 @@ public class Transaction {
             contract.currency("USD");
             return contract;
         }
-      //  contract.conid(609954644);
+        //  contract.conid(609954644);
         contract.secType("STK");
         contract.exchange("SMART");
         contract.currency("USD");
@@ -152,20 +152,20 @@ public class Transaction {
         Contract contract =new Contract();
         contract.symbol(symbol);
         //  contract.conid(609954644);
-        contract.lastTradeDateOrContractMonth("202309");
+        contract.lastTradeDateOrContractMonth("202402");
         contract.secType("OPT");
         contract.exchange("SMART");
         contract.currency("USD");
         return  contract;
     }
-    public static Contract createContract(int contract_id){
-        Contract contract =new Contract();
-        //contract.symbolsFilled(symbolsFilled);
-          contract.conid(contract_id);
-        contract.secType("OPT");
-        contract.exchange("SMART");
+
+    public  static Contract createStkContract(String symbol){
+        Contract contract = new Contract();
+        contract.symbol(symbol);
+        contract.secType("STK");
         contract.currency("USD");
-        return  contract;
+        contract.exchange("SMART");
+        return contract;
     }
 
     public static Contract comboContract(Strategy strategy){
@@ -184,10 +184,13 @@ public class Transaction {
 
         if(strategy instanceof ShortBoxSpread ){
             int bull_buy_conid=((ShortBoxSpread) strategy).bullSpread.buy.getOpt().getContractId();
+//            System.out.println(((ShortBoxSpread) strategy).bullSpread.buy.getOpt().getContractId());
             int bull_sell_conid=((ShortBoxSpread) strategy).bullSpread.sell.getOpt().getContractId();
-
+//            System.out.println(((ShortBoxSpread) strategy).bullSpread.sell.getOpt().getContractId());
             int bear_sell_conid=((ShortBoxSpread) strategy).bearSpread.sell.getOpt().getContractId();
+//            System.out.println(((ShortBoxSpread) strategy).bearSpread.sell.getOpt().getContractId());
             int bear_buy_conid=((ShortBoxSpread) strategy).bearSpread.buy.getOpt().getContractId();
+//            System.out.println(((ShortBoxSpread) strategy).bearSpread.buy.getOpt().getContractId());
 
             return comboBoxSpred(strategy.getCompanySymbol(),bull_buy_conid,bull_sell_conid,bear_sell_conid,bear_buy_conid);
         }

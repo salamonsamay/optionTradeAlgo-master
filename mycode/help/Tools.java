@@ -2,12 +2,15 @@ package mycode.help;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.PrintWriter;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 
 import mycode.data.LoadData;
@@ -27,9 +30,9 @@ public class Tools {
     //contain  the  strategy info  that sended
     public  static Hashtable<Integer,String> sendedOrder=new Hashtable<>();
 
-    public static final String PATH ="read_file/liquid/";
-    public static  String  DATE_START = "2023-07-17";
-    public static  String  DATE_END = "2023-09-29";
+    public static final String PATH ="read_file/indices/";
+    public static  String  DATE_START = "2023-10-01";
+    public static  String  DATE_END = "2023-10-07";
 
 
     public static ArrayList<String> readCompanyFromFile(){
@@ -39,47 +42,102 @@ public class Tools {
         String symbols[]=file.list();
         boolean flag=false;
         for(int i=0;i<symbols.length;i++){
+
             String symbol=symbols[i].substring(0,symbols[i].indexOf('.'));
-
-                companyList.add(symbols[i].substring(0,symbols[i].indexOf('.')));
-
+            companyList.add(symbol);
 
         }
-
         return companyList;
-
     }
 
-    public static ArrayList<Option> getOptions(ArrayList<String> company_list) throws FileNotFoundException {
 
-        ArrayList<OptionChain>option_chain_list=new ArrayList<>();
+    /**
+     * Retrieves option data for a list of companies while checking for ex-dividend dates.
+     *
+     * @param company_list List of company names for which option data is retrieved.
+     * @return ArrayList of Option objects containing the retrieved option data.
+     * @throws FileNotFoundException If option data files are not found or an error occurs during data retrieval.
+     */
+    public static ArrayList<Option> getOptions(ArrayList<String> company_list) throws FileNotFoundException {
+        // Create a list to store OptionChain instances for each company.
+        ArrayList<OptionChain> option_chain_list = new ArrayList<>();
+
+        // Create a thread pool for concurrent data retrieval.
         ExecutorService pool = Executors.newFixedThreadPool(100);
-        for(int i=0;i<company_list.size();i++) {
-            if(!Tools.haveExDividend(company_list.get(i))) {//not have a dividend  until the expration
+
+        // Iterate through the list of company names.
+        for (int i = 0; i < company_list.size(); i++) {
+            // Check if the company has ex-dividend dates within the specified date range.
+            if (!Tools.haveExDividend(company_list.get(i))) {
+                // Create an OptionChain instance for the current company.
                 OptionChain option_chain = new OptionChain(company_list.get(i));
+
+                // Configure the OptionChain with limit, expiration date range, and other options.
                 option_chain
                         .Limit("250")
                         .Expiriation_date_gt(Tools.DATE_START)
                         .Expiriation_date_lt(Tools.DATE_END)
                         .endPoint();
 
+                // Add the OptionChain to the list for concurrent processing.
                 option_chain_list.add(option_chain);
+
+                // Execute the OptionChain retrieval in a separate thread.
                 pool.execute(option_chain);
             }
-
         }
+
+        // Shutdown the thread pool and wait for all tasks to complete.
         pool.shutdown();
-        while(!pool.isTerminated()) {}
+        while (!pool.isTerminated()) {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
 
-        ArrayList<Option> options_list=new ArrayList<>();
+        // Create a list to store retrieved Option objects.
+        ArrayList<Option> options_list = new ArrayList<>();
 
-        for(int i=0;i<option_chain_list.size();i++){
+        // Iterate through the OptionChain instances and retrieve their Option data.
+        for (int i = 0; i < option_chain_list.size(); i++) {
             options_list.addAll(option_chain_list.get(i).option_list);
             option_chain_list.get(i).updateProcess();
+
         }
+//        option_chain_list.stream()
+//                .peek(optionChain -> options_list.addAll(optionChain.option_list))
+//                .forEach(OptionChain::updateProcess);
 
         return options_list;
+    }
 
+
+    /**
+     * option with the same symbol and the same expression date  considered same group
+     * example option in the same group AAPL231006
+     O:AAPL231006C00192500 --> AAPL231006
+     O:AAPL231006C00167500 --> AAPL231006
+     O:AAPL231006P00177500 --> AAPL231006
+     * @param strategy
+     * @return the group name
+     */
+    public  static String getGroup(Strategy strategy) {
+        if(strategy instanceof  BearSpread){
+            return ((BearSpread) strategy).sell.getOpt().getTicker().substring(0,((BearSpread) strategy).sell.getOpt().getTicker().length()-9);
+        }
+        if(strategy instanceof  BullSpread){
+            return ((BullSpread) strategy).sell.getOpt().getTicker().substring(0,((BullSpread) strategy).sell.getOpt().getTicker().length()-9);
+        }
+        if(strategy instanceof  ShortBoxSpread){
+            return getGroup(((ShortBoxSpread) strategy).bullSpread);
+        }
+        if(strategy instanceof  LongBoxSpread){
+            return getGroup(((LongBoxSpread) strategy).bullSpread);
+        }
+
+        return null;
     }
 
     public static boolean isValidData(Strategy strategy){
@@ -291,6 +349,7 @@ public class Tools {
                 //    opt.setContractId(Tools.getContractId(opt.getUnderlying_ticker(),opt.getTicker()));
                 opt.setContractId(Tools.contract_id_list.get(opt.getTicker()));
 
+
             }catch (NullPointerException nullPointerException){
                 opt.setContractId(-1);
                 continue;
@@ -379,14 +438,19 @@ public class Tools {
             }).start();
         }
     }
+
+    /**
+     * get the data from IBKR and extract the contract id and ticker information
+     * @param symbol
+     * @return string that contains the contract id and ticker information  like "O:SPX240920C05100000,637415894"
+     */
     public static String extract_and_write_contractID(String symbol){
         String path=Tools.PATH+symbol+".txt";
         File file=new File(path);
         Hashtable<String,String> hashtable= new Hashtable<String, String>();
-        Scanner in= null;
-        in = new Scanner(LoadData.data);
+        Scanner in;
+        in = new Scanner(LoadData.data);// LoadData.data is the data from IBKR
         String key="",value="";
-        String localSymbolName="";
         while (in.hasNextLine()){
             String line[]=in.nextLine().split(" ");
 
@@ -419,6 +483,14 @@ public class Tools {
         return info;
     }
 
+
+    /**
+     * the function read all the data in the given path
+     * store it in hashtable
+     * the structure of the file is like --> "O:ARKK230929C00039000,647350921"
+     * in example  above in the hashTable the key is O:ARKK230929C00039000 and the value is 647350921
+     * @return  the hash table
+     */
     public static Hashtable load()  {
 
         Hashtable<String,Integer> temp=new Hashtable<>();
@@ -474,7 +546,9 @@ public class Tools {
     }
 
 
-    public static void main(String args[]) {
+    public static void main(String args[]) throws IOException {
+
+
 
 
         LocalDateTime l= LocalDateTime.now();

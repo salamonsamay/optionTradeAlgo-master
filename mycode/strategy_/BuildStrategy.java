@@ -1,52 +1,32 @@
 package mycode.strategy_;
 
+import mycode.help.Tools;
 import mycode.object.*;
-import mycode.trade.Main;
+
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 
 public class BuildStrategy {
 
 
-	public static ArrayList<BoxSpread> boxSpread(ArrayList<Option> list){
-		ArrayList<BearSpread>bearList=new ArrayList<BearSpread>();
-		bearList.addAll(bearSpread(list));
 
-		ArrayList<BullSpread> bullList=new ArrayList<BullSpread>();
-		bullList.addAll(bullSpread(list));
-
-		ArrayList<BoxSpread> boxSpredsList=new ArrayList<BoxSpread>();
-		for(int i=0;i<bullList.size()-1;i++) {
-			for(int j=bearList.size()-1;j>0;j--) {
-				if(BoxSpread.inputIsCorrect(bullList.get(i), bearList.get(j))) {
-					boxSpredsList.add(new BoxSpread(bullList.get(i), bearList.get(j)));
-				}
-				else {j=0;}
-			}
-		}
-		return boxSpredsList;
-
-	}
-
-	public static ArrayList<BoxSpread> boxSpread(ArrayList<BullSpread> bullList, ArrayList<BearSpread> bearList ){
-		ArrayList<BoxSpread> boxSpredsList=new ArrayList<>();
-		for(int i=0;i<bullList.size();i++) {
-			for(int j=0;j<bearList.size();j++) {
-				if(BoxSpread.inputIsCorrect(bullList.get(i),bearList.get(j))){
-					boxSpredsList.add(new BoxSpread(bullList.get(i),bearList.get(j)));
-				}
-			}
-		}
-		return boxSpredsList;
-	}
 
 	public static ArrayList<ShortBoxSpread> shortBoxSpread(ArrayList<BullSpread> bullList, ArrayList<BearSpread> bearList,double spread_diff ){
+
 		ArrayList<ShortBoxSpread> shortBoxSpreadsList=new ArrayList<>();
+
+
 		for(int i=0;i<bullList.size();i++) {
 
 			for(int j=0;j<bearList.size();j++) {
-
+//                if(bullList.get(i).buy.getOpt().getStrike()<bearList.get(j).sell.getOpt().getStrike()){
+//					i++;
+//				break;
+//				}
 				if(Math.abs(bearList.get(j).buy.getOpt().getStrike()-bearList.get(j).sell.getOpt().getStrike())>spread_diff){
 					continue;
 				}
@@ -56,6 +36,36 @@ public class BuildStrategy {
 				}
 			}
 		}
+		System.out.println("build "+shortBoxSpreadsList.size()+" short boxSpread");
+		return shortBoxSpreadsList;
+	}
+
+	public static ArrayList<ShortBoxSpread> shortBoxSpread2(ArrayList<BullSpread> bullList, ArrayList<BearSpread> bearList,double spread_diff ){
+		Map<Object, List<BullSpread>> bullMap=bullList.stream().collect(Collectors.groupingBy(Tools::getGroup));
+		Map<Object, List<BearSpread>> bearMap=bearList.stream().collect(Collectors.groupingBy(Tools::getGroup));
+		ArrayList<ShortBoxSpread> shortBoxSpreadsList=new ArrayList<>();
+		System.out.println("the key size  in bull map " + bullMap.keySet().size());
+		System.out.println("the key size in bear map " + bearMap.keySet().size());
+		for (Object key : bullMap.keySet()) {
+			if (bearMap.containsKey(key)) {
+				List<BullSpread> bullSpreads = bullMap.get(key);
+				List<BearSpread> bearSpreads = bearMap.get(key);
+				System.out.println(key);
+				// Perform the comparison logic between 'bullSpreads' and 'bearSpreads'
+
+				for (BullSpread bullSpread : bullSpreads) {
+					for (BearSpread bearSpread : bearSpreads) {
+
+						if (Math.abs(bearSpread.buy.getOpt().getStrike() - bearSpread.sell.getOpt().getStrike()) <= spread_diff) {
+							if (ShortBoxSpread.inputIsCorrect(bullSpread, bearSpread)) {
+								shortBoxSpreadsList.add(new ShortBoxSpread(bullSpread, bearSpread));
+							}
+						}
+					}
+				}
+			}
+		}
+
 		return shortBoxSpreadsList;
 	}
 
@@ -76,8 +86,38 @@ public class BuildStrategy {
 				}
 			}
 		}
+		System.out.println("build "+longBoxSpreadsList.size()+" long boxSpread");
 		return longBoxSpreadsList;
 	}
+
+	public static ArrayList<LongBoxSpread> longBoxSpread2(ArrayList<BullSpread> bullList, ArrayList<BearSpread> bearList, double spread_diff) {
+		Map<String, List<BullSpread>> bullMap = bullList.stream().collect(Collectors.groupingBy(Tools::getGroup));
+		Map<String, List<BearSpread>> bearMap = bearList.stream().collect(Collectors.groupingBy(Tools::getGroup));
+
+		ArrayList<LongBoxSpread> longBoxSpreadsList = new ArrayList<>();
+
+		for (String key : bullMap.keySet()) {
+			if (bearMap.containsKey(key)) {
+				List<BullSpread> bullSpreads = bullMap.get(key);
+				List<BearSpread> bearSpreads = bearMap.get(key);
+
+				for (BullSpread bullSpread : bullSpreads) {
+					for (BearSpread bearSpread : bearSpreads) {
+						if (Math.abs(bearSpread.buy.getOpt().getStrike() - bearSpread.sell.getOpt().getStrike()) <= spread_diff) {
+							if (LongBoxSpread.inputIsCorrect(bullSpread, bearSpread)) {
+								longBoxSpreadsList.add(new LongBoxSpread(bullSpread, bearSpread));
+
+							}
+						}
+					}
+				}
+
+			}
+		}
+
+		return longBoxSpreadsList;
+	}
+
 	public static  ArrayList<LongBoxSpread> longBoxSpread(ArrayList<BullSpread> bullList, ArrayList<BearSpread> bearList){
 		return longBoxSpread(bullList,bearList, 100000);
 	}
@@ -115,12 +155,30 @@ public class BuildStrategy {
 
 	}
 
-	public static ArrayList<IronCondor> ironCondor(ArrayList<BullSpread> bullList, ArrayList<BearSpread> bearList){
+	public static ArrayList<IronCondor> ironCondor2(ArrayList<BullSpread> bullList, ArrayList<BearSpread> bearList,double spread_diff){
+		Map<Object, List<BullSpread>> bullMap=bullList.stream().collect(Collectors.groupingBy(Tools::getGroup));
+		Map<Object, List<BearSpread>> bearMap=bearList.stream().collect(Collectors.groupingBy(Tools::getGroup));
 		ArrayList<IronCondor> ironCondorsList=new ArrayList<>();
-		for(int i=0;i<bullList.size();i++) {
-			for(int j=0;j<bearList.size();j++) {
-				if(IronCondor.inputIsCorrect(bullList.get(i),bearList.get(j))){
-					ironCondorsList.add(new IronCondor(bullList.get(i),bearList.get(j)));
+		System.out.println("the key size  in bull map " + bullMap.keySet().size());
+		System.out.println("the key size in bear map " + bearMap.keySet().size());
+
+		for (Object key : bullMap.keySet()) {
+			System.out.println("iron condor size "+ironCondorsList.size());
+			if (bearMap.containsKey(key)) {
+				List<BullSpread> bullSpreads = bullMap.get(key);
+				List<BearSpread> bearSpreads = bearMap.get(key);
+				System.out.println(key);
+				// Perform the comparison logic between 'bullSpreads' and 'bearSpreads'
+
+				for (BullSpread bullSpread : bullSpreads) {
+					for (BearSpread bearSpread : bearSpreads) {
+
+						if (Math.abs(bearSpread.buy.getOpt().getStrike() - bearSpread.sell.getOpt().getStrike()) <= spread_diff) {
+							if (IronCondor.inputIsCorrect(bullSpread, bearSpread)) {
+								ironCondorsList.add(new IronCondor(bullSpread, bearSpread));
+							}
+						}
+					}
 				}
 			}
 		}
@@ -144,6 +202,7 @@ public class BuildStrategy {
 				double spread=Math.abs(list.get(i).getStrike()-list.get(j).getStrike());
 				if(spread<=num && BearSpread.inputIsCorrect(list.get(i),list.get(j)) ) {
 					bear_list.add(new BearSpread(new Sell(list.get(i)), new Buy(list.get(j))));
+
 				}
 				else {j=list.size();}
 			}
@@ -195,7 +254,9 @@ public class BuildStrategy {
 //				}
 				double spread_=Math.abs(list.get(i).getStrike()-list.get(j).getStrike());
 				if(spread_<=num && BullSpread.inputIsCorrect(list.get(i),list.get(j))  ) {
+
 					bullList.add(new BullSpread(new Buy(list.get(i)), new Sell(list.get(j))));
+
 				}
 				else {j=list.size();}
 			}

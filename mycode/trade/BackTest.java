@@ -1,244 +1,297 @@
 package mycode.trade;
 
 import mycode.data.StockRequest;
+import mycode.my_sql.MySQL;
+import mycode.object.AggregatesObject;
 import mycode.object.Pair;
 import mycode.object.StockObject;
-import org.json.simple.parser.ParseException;
 
-import java.io.IOException;
-import java.io.PrintStream;
-import java.text.DecimalFormat;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.Hashtable;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class BackTest {
 
-    private  long start;
-    private  long end;
-    private String symbol;
-    private ArrayList<StockObject> list;
 
 
-    public static Hashtable<String,String> hashtable=new Hashtable<>();
-
-    static  int thread_number=0;
 
 
-    public  BackTest(int year,int month,int day){
-        LocalDateTime dateTime = LocalDateTime.of(year, month, day, 16, 30, 0);
-        LocalDateTime dateTime2 = LocalDateTime.of(year, month, day, 23, 00, 0);
-        ZonedDateTime zonedDateTime = dateTime.atZone(ZoneId.systemDefault());
-        ZonedDateTime zonedDateTime2 = dateTime2.atZone(ZoneId.systemDefault());
-        Instant instant = zonedDateTime.toInstant();
-        Instant instant2 = zonedDateTime2.toInstant();
-        start = instant.toEpochMilli();
-        end = instant2.toEpochMilli();
+    public static List<List<Double>> calculateMonthlyFibonacciLevels(ArrayList<ArrayList<AggregatesObject>> data) {
+        List<List<Double>> monthlySupportResistanceLevels = new ArrayList<>();
+        int daysPerMonth = 20; // Assuming an average of 20 trading days per month
+
+        for (int monthIndex = 0; monthIndex < data.size(); monthIndex += daysPerMonth) {
+            ArrayList<AggregatesObject> monthlyData = new ArrayList<>();
+            for (int dayIndex = monthIndex; dayIndex < monthIndex + daysPerMonth && dayIndex < data.size(); dayIndex++) {
+                monthlyData.addAll(data.get(dayIndex));
+            }
+
+            List<Double> levels = calculateFibonacciLevels(monthlyData);
+
+            monthlySupportResistanceLevels.add(levels);
+        }
+
+        return monthlySupportResistanceLevels;
     }
 
-    public  void build(String symbol) {
-        this.symbol=symbol;
+    public static List<Double> calculateFibonacciLevels(ArrayList<AggregatesObject> dayData) {
+        List<Double> levels = new ArrayList<>();
 
-        try {
-            list=new StockRequest(symbol).From(start+"").To(end+"").endPoint().build();
-        } catch (IOException e) {
-            try {
-                list=new StockRequest(symbol).From((start- 1000*60*60*24)+"").To((end- 1000*60*60*24)+"").endPoint().build();
-            } catch (IOException ex) {
-                throw new RuntimeException(ex);
-            } catch (ParseException ex) {
-                throw new RuntimeException(ex);
-            }
-        } catch (ParseException e) {
-            try {
-                list=new StockRequest(symbol).From((start- 1000*60*60*24)+"").To((end- 1000*60*60*24)+"").endPoint().build();
-            } catch (IOException ex) {
-                throw new RuntimeException(ex);
-            } catch (ParseException ex) {
-                throw new RuntimeException(ex);
-            }
+        double high = dayData.stream().mapToDouble(AggregatesObject::getHighest_price).max().getAsDouble();
+        double low = dayData.stream().mapToDouble(AggregatesObject::getLowest_price).min().getAsDouble();
+        double priceRange = high - low;
 
-        }
+        double fib23_6 = low + 0.236 * priceRange;
+        double fib38_2 = low + 0.382 * priceRange;
+        double fib50 = low + 0.5 * priceRange;
+        double fib61_8 = low + 0.618 * priceRange;
+        double fib78_6 = low + 0.786 * priceRange;
 
+        levels.add(fib23_6);
+        levels.add(fib38_2);
+        levels.add(fib50);
+        levels.add(fib61_8);
+        levels.add(fib78_6);
 
+        return levels;
     }
 
-    public int  M15(int first,int second,int therd){
-        double max=list.get(first).getLowest_price();
-        double min=list.get(first).getLowest_price();
 
-        for(int i=first+1;i<second;i++){
-            if(list.get(i).getHighest_price()>max){
-                max=list.get(i).getHighest_price();
-            }
-            if(list.get(i).getLowest_price()<min){
-                min=list.get(i).getClose_price();
-            }
-        }
-        if(max-min<list.get(first).getHighest_price()*0.002 || max-min<1){
-            System.out.println("try next day");
-            return 0;
-        }
+    /**
+     *
+     * @param ticker
+     * @return array list inside array list each sub list represents a day
+     */
+    public static ArrayList<ArrayList<AggregatesObject>> getList(String ticker){
+        ArrayList<AggregatesObject>list= (ArrayList<AggregatesObject>) MySQL.selectStar(ticker);
+        ArrayList<AggregatesObject>filterList= (ArrayList<AggregatesObject>) list.stream().filter(agg -> agg.getTimestamp()%(1000*60*60*24)>=48600000
+                && agg.getTimestamp()%(1000*60*60*24)<=72000000).collect(Collectors.toList());
 
-        double long_position=0;
-        double short_position=0;
-        for(int i=second;i<therd;i++){//define the long/short point
-            if(list.get(i).getLowest_price()<min ){
-                long_position=list.get(i).getLowest_price();
-                System.out.println("long position at "+long_position);
-                break;
-            }
-            if(list.get(i).getHighest_price()>max){
-                short_position=list.get(i).getClose_price();
-                System.out.println("short position at "+short_position);
-                break;
-            }
-        }
-        if(long_position==0 && short_position ==0){
-            System.out.println("need to try next day");
-            return 0;
-        }//check if have opportunity to buy or sell
+        ArrayList<ArrayList<AggregatesObject>> mainList= new ArrayList<>();
 
-        for(int i=therd;i<list.size();i++){
-            if(long_position!=0){
-                if(list.get(i).getHighest_price()>max){
-                    System.out.println("sell back at "+list.get(i).getHighest_price());
-                    return 1;
+        for(int i=0; i<filterList.size(); i++){//insert the elements to 2 dimensional arrays
+            AggregatesObject agg=filterList.get(i);
+            if(agg.getTimestamp()%(1000*60*60*24)==48600000){
+                ArrayList<AggregatesObject> subList= new ArrayList<>();
+                for(int j=i;agg.getTimestamp()%(1000*60*60*24)<72000000;j++){
+//                    System.out.println(new Date(agg.getTimestamp()));
+                    agg=filterList.get(j);
+                    subList.add(agg);
                 }
-            }
-            if(short_position!=0){
-                if(list.get(i).getLowest_price()<min){
-                    System.out.println("buy back at "+list.get(i).getLowest_price());
-                    return 1;
-                }
+                mainList.add(subList);
             }
         }
-        System.out.println("the function field");
-        return -1;
-
+        return mainList;
     }
 
-    public    double simulation() throws IOException, ParseException {
+    public static  void dayliVwap(String symbol){
+        ArrayList<ArrayList<AggregatesObject>> mainList=getList(symbol) ;
+        double failed=0;
         double success=0;
-        double faild=0;
-        for(int i=0;i<30;i++) {
-            System.out.println("current data "+new Date(start));
-            setStart(start-1000*60*60*24);
-            setEnd(end-1000*60*60*24);
-            try {
-                build(symbol);
-                int result=M15(0,15,30);
+        for(int i=0;i<mainList.size();i++){//main list
+            double sumVwap=0;
+            double sumOpenPrice=0;
+            double index=0;
+            ArrayList<AggregatesObject> subList=mainList.get(i);
+            for(int j=0;j< subList.size();j++){//sub list
+                AggregatesObject element=subList.get(j);
 
-                if(result==1){
-                    success++;
+
+                if(index++<20 || index>350){continue;}//if is after 20 minutes from beginning and after 40 minutes before the end
+                sumVwap+=subList.get(j-1).getVwap()+subList.get(j-2).getVwap()+subList.get(j-3).getVwap()+
+                        subList.get(j-4).getVwap()+subList.get(j-5).getVwap()+subList.get(j-6).getVwap()+
+                        subList.get(j-7).getVwap()+subList.get(j-8).getVwap();
+
+                sumOpenPrice+=subList.get(j-1).getOpen_price()+subList.get(j-2).getOpen_price()+subList.get(j-3).getOpen_price()+
+                        subList.get(j-4).getOpen_price()+subList.get(j-5).getOpen_price()+subList.get(j-6).getOpen_price()+
+                        subList.get(j-7).getOpen_price()+subList.get(j-8).getOpen_price();
+                double avgVwap=sumVwap/8;
+                double avgOpenPrice=sumOpenPrice/8;
+
+                if(avgVwap*1.001<avgOpenPrice){//need to down
+                    System.out.println("need to down");
+                    System.out.println(element);
+                    for(int k=j;k<=j+30;k=k+5){
+                        System.out.println(new Date(subList.get(k).getTimestamp())+"   :  "+subList.get(k).getOpen_price());
+                    }
+                    if(subList.get(j).getOpen_price()>subList.get(j+15).getOpen_price()){
+                        success++;
+                    }
+                    else {failed++;}
+
+                    System.out.println();
+//                    break;
                 }
-                else if(result==-1){
-                    faild++;
-                }
-            }
-            catch (NullPointerException e){
-                System.out.println(e);
-            }
+                if(avgVwap*0.999>avgOpenPrice) {//need to up
+                    System.out.println("need to up");
+                    System.out.println(element);
+                    for(int k=j;k<=j+30;k=k+5){
+                        System.out.println(new Date(subList.get(k).getTimestamp())+"   :  "+subList.get(k).getOpen_price());
+                    }
+                    if(subList.get(j).getOpen_price()<subList.get(j+15).getOpen_price()){
+                        success++;
+                    }
+                    else {failed++;}
 
-
-        }
-        DecimalFormat df = new DecimalFormat("#.##");
-        hashtable.put(symbol,"["+(int)(success)+","+(int)(faild)+"] "+df.format((success/(success+faild))*100)+"%");
-
-        System.out.println("succes "+success);
-        System.out.println("faield "+faild);
-        System.out.println(symbol+" "+(success/(success+faild))*100 +"%");
-        return(success/success+faild)*100;
-    }
-
-    public void setStart(long start)  {
-        this.start = start;
-
-    }
-
-    public static synchronized void counter(int n){
-        if(n==1){
-            thread_number++;
-
-        }
-        if(n==-1){
-
-            thread_number--;
-        }
-    }
-
-    public void setEnd(long end) {
-        this.end = end;
-    }
-
-    public static void run(String symbol) throws IOException, ParseException, InterruptedException {
-        Thread t= new Thread(new Runnable() {
-
-            public void run() {
-                BackTest b=new BackTest(2023,04,26);
-
-                b.build(symbol);
-
-
-                b.M15(0,15,30);
-
-                try {
-                    counter(1);
-                    b.simulation();
-                    counter(-1);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } catch (ParseException e) {
-                    e.printStackTrace();
+                    System.out.println();
+//                    break;
                 }
             }
-        });
-        t.start();
+        }
 
 
+        System.out.println("success : "+success);
+        System.out.println("failed : "+failed);
+        System.out.println("success rates : "+success/(success+failed)*100);
     }
 
+    public static void avg(String symbol){
+        double numOfLastMinute=15;
+        ArrayList<ArrayList<AggregatesObject>> mainList=getList(symbol) ;
+        double failed=0;
+        double success=0;
+        for(int i=0;i<mainList.size();i++){//main list
 
-    public static void main(String[] args) throws IOException, ParseException, InterruptedException {
+            double index=0;
+            ArrayList<AggregatesObject> subList=mainList.get(i);
+            for(int j=0;j< subList.size();j++){//sub list
 
-//        StockRequest request=new StockRequest("SPY");
-//        ArrayList<StockObject> stockObjects=request.From("2023-03-02").To("2023-04-26").endPoint().build();
-//        System.out.println(stockObjects.size());
-//        ArrayList<StockObject> new_list=StockObject.filter(stockObjects);
-//        System.out.println(new_list.size());
-//        for(int i=0;i<new_list.size();i++){
-//            System.out.println(new Date(new_list.get(i).getTimestamp()));
-//        }
+                AggregatesObject element=subList.get(j);
+                double sumOpenPrice=0;
+                if(j<numOfLastMinute || j>350){continue;}
+                for(int k=0;k<numOfLastMinute;k++){
+                    sumOpenPrice+=subList.get(j-k).getOpen_price();
+
+                }
+
+                double avgOpenPrice=sumOpenPrice/numOfLastMinute;
 
 
+                if(element.getOpen_price()*1.01<avgOpenPrice){//need to up
+                    System.out.println("need to up");
+                    System.out.println(element);
+                    for(int k=j;k<=j+15;k=k+5){
+                        System.out.println(new Date(subList.get(k).getTimestamp())+"   :  "+subList.get(k).getOpen_price());
+                    }
+                    if(subList.get(j).getOpen_price()<subList.get(subList.size()-1).getOpen_price()){
+                        success++;
+                    }
+                    else {failed++;}
 
-        String symbols[]={"AAPL","AMZN","BABA","GOOG","META","MSFT","NFLX","NVDA","QQQ","SPY","TSLA"};
-        for(int i=0;i<symbols.length;i++ ){
-            run(symbols[i]);
+                    System.out.println();
+                    break;
+                }
+                if(element.getOpen_price()*0.99>avgOpenPrice) {//need to down
+
+                    System.out.println("need to down");
+                    System.out.println(element);
+                    for(int k=j;k<=j+15;k=k+5){
+                        System.out.println(new Date(subList.get(k).getTimestamp())+"   :  "+subList.get(k).getOpen_price());
+                    }
+                    if(subList.get(j).getOpen_price()>subList.get(subList.size()-1).getOpen_price()){
+                        success++;
+                    }
+                    else {failed++;}
+
+                    System.out.println();
+                    break;
+                }
+            }
         }
-        Thread.sleep(5000);
-        System.out.println(thread_number);
-        while (BackTest.thread_number!=0){
-            Thread.sleep(2000);
+
+
+        System.out.println("success : "+success);
+        System.out.println("failed : "+failed);
+        System.out.println("success rates : "+success/(success+failed)*100);
+    }
+
+    public  static  void M15(String ticker,int minute) {
+        ArrayList<ArrayList<AggregatesObject>> mainList=getList(ticker) ;
+        double failed=0;
+        double success=0;
+        double natural=0;//not get inside a position
+
+        for(int i=0;i<mainList.size();i++){//main list
+            double max=0;
+            double min=10000;
+            ArrayList<AggregatesObject> subList=mainList.get(i);
+            for(int j=0;j<minute;j++){//choose the minimum and maximum point
+                AggregatesObject agg=subList.get(j);
+                if(agg.getHighest_price()>max){
+                    max=agg.getHighest_price();
+                }
+                if(agg.getLowest_price()<min){
+                    min=agg.getLowest_price();
+                }
+            }
+            if(min/max<0.8){
+                natural++;
+                continue;
+            }
+
+            for(int j=minute;j<minute*2;j++){
+                AggregatesObject agg=subList.get(j);
+                if(agg.getLowest_price()<min){
+                    System.out.println("time to buy at "+agg.getLowest_price());
+                    for(int k=minute*2;k<subList.size();k++){
+                        if(subList.get(k).getHighest_price()>max){
+                            System.out.println("time to sell back at "+subList.get(k).getHighest_price());
+                            System.out.println();
+                            success++;
+                            break;
+                        }
+                        if(k==subList.size()-1){
+                            if(subList.get(k).getHighest_price()>min){
+                                natural++;
+                            }
+                           else failed++;
+                        }
+                    }
+                    break;
+                }
+                else if(agg.getHighest_price()>max){
+                    System.out.println("time to sell at "+agg.getHighest_price());
+                    for(int k=minute*2;k<subList.size();k++){
+                        if(subList.get(k).getLowest_price()<min){
+                            System.out.println("time to buy  back at "+subList.get(k).getLowest_price());
+                            System.out.println();
+                            success++;
+                            break;
+                        }
+                        if(k==subList.size()-1){
+                            if(subList.get(k).getLowest_price()<max){
+                                natural++;
+                            }
+                            else failed++;
+                        }
+                    }
+                    break;
+                }
+                if(j==minute*2-1){
+                    natural++;
+                }
+
+            }
+            System.out.println();
+
         }
+        System.out.println("Summary");
+        System.out.println("success "+success);
+        System.out.println("failed "+failed);
+        System.out.println("Success rate is " +success/ (success+failed)*100);
+        System.out.println(natural);
+    }
 
-        System.out.println();
-        System.out.println("AAPL \t"+hashtable.get("AAPL"));
-        System.out.println("AMZN \t"+hashtable.get("AMZN"));
-        System.out.println("BABA \t"+hashtable.get("BABA"));
-        System.out.println("GOOG \t"+hashtable.get("GOOG"));
-        System.out.println("META \t"+hashtable.get("META"));
-        System.out.println("MSFT \t"+hashtable.get("MSFT"));
-        System.out.println("NFLX \t"+hashtable.get("NFLX"));
-        System.out.println("NVDA \t"+hashtable.get("NVDA"));
-        System.out.println("QQQ \t"+hashtable.get("QQQ"));
-        System.out.println("SPY \t"+hashtable.get("SPY"));
-        System.out.println("TSLA \t"+hashtable.get("TSLA"));
+    public static void main(String[] args) {
+     //   M15("nflx",5);
 
+        double price=0;
+        double counter=0;
+      ArrayList<ArrayList<AggregatesObject>> mainList=getList("pypl");
+      for(ArrayList<AggregatesObject> subList:mainList){
+          price+=subList.get(0).getClose_price();
+          counter++;
+
+      }
+        System.out.println(price/counter);
     }
 }

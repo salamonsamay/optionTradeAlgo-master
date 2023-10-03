@@ -35,10 +35,13 @@ public class Greeks {
 
 	public Greeks(Greeks other) {
 		super();
-		this.delta = other.delta;
-		this.gamma = other.gamma;
-		this.vega = other.vega;
-		this.theta = other.theta;
+		if(other!=null){
+			this.delta = other.delta;
+			this.gamma = other.gamma;
+			this.vega = other.vega;
+			this.theta = other.theta;
+		}
+
 	}
 
 	public  Greeks(JSONObject json) throws NullPointerException{

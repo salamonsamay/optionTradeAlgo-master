@@ -411,7 +411,7 @@ public class BackTest3 {
                 //   table.put(symbol,support-resist);
             }
         }
-        //       s(StockObject.filter_(stockObjects),15);
+   //            s(StockObject.filter_(stockObjects),15);
         //  supportandresistAVG(StockObject.filter_(stockObjects),2);
         //       supportandresist(StockObject.filter_(stockObjects)[0]);
 //        daylyAverage(StockObject.filter_(stockObjects),1);

@@ -59,21 +59,15 @@ public class ShortBoxSpread implements  Strategy{
     public boolean isCreditSpread() {
         return true;
     }
-    public double percentage(){
 
-        return (maxProfit()*100)/myInvestment();
-    }
-
-    public double myInvestment(){
-        return (price()*-1)*100*0.02;
-    }
     public static boolean inputIsCorrect(BullSpread bullCall, BearSpread bearPut){
 
         boolean isCredit= (bullCall.isCreditSpread() && bearPut.isCreditSpread());
         boolean sameDate=bullCall.sell.getOpt().getExpiration_date().equals(bearPut.sell.getOpt().getExpiration_date());
-        boolean sameSymbol=bullCall.sell.getOpt().getUnderlying_ticker().equals(bearPut.sell.getOpt().getUnderlying_ticker());
+        boolean sameSymbol=bullCall.getCompanySymbol().equals(bearPut.getCompanySymbol());
         boolean equalStrike1=bullCall.buy.getOpt().getStrike()==bearPut.sell.getOpt().getStrike();
         boolean equalStrike2=bullCall.sell.getOpt().getStrike()==bearPut.buy.getOpt().getStrike();
+
 
         if(equalStrike1 && equalStrike2 && sameDate && sameSymbol && isCredit){
             return true;
@@ -82,45 +76,61 @@ public class ShortBoxSpread implements  Strategy{
     }
     public String toString(){
         String str="Box \n"
-                +"credit "+(Math.abs(bullSpread.price()+ bearSpread.price())+"\n"
+                +"credit "+(100*Math.abs(bullSpread.price()+ bearSpread.price())+"\n"
                 +"day to expiration "+daysToExpiration()+"\n"
+                + "expiration date "+ bullSpread.sell.getOpt().getExpiration_date()+"\n"
                 +"undrline tiker call "+ bearSpread.sell.getOpt().getUnderlying_ticker()+"\n"
-                + "SELL/BUY Contract("+ bearSpread.sell.getOpt().getTicker()+","+ bearSpread.buy.getOpt().getTicker() + ")\n"
-                + "BUY/SELL Contract("+ bullSpread.buy.getOpt().getTicker()+","+ bullSpread.sell.getOpt().getTicker() + ")\n"
-                +"put date "+ bearSpread.sell.getOpt().getExpiration_date()+"\n"
-                + "call date"+ bullSpread.sell.getOpt().getExpiration_date()+"\n"
-                + "/////////////////////////////////////\n"
-                + "SELL/BUY Strike("+ bearSpread.sell.getOpt().getStrike()+","+ bearSpread.buy.getOpt().getStrike()+")\n"
-                + "SELL/BUY ASK("+ bearSpread.sell.getOpt().getAsk()+","+ bearSpread.buy.getOpt().getAsk()+")\n"
-                + "SELL/BUY BID("+ bearSpread.sell.getOpt().getBid()+","+ bearSpread.buy.getOpt().getBid()+")\n"
-                + "//////////////////////////////////////\n"
-                + "BUY/SELL Strike("+ bullSpread.buy.getOpt().getStrike()+","+ bullSpread.sell.getOpt().getStrike()+")\n"
-                + "BUY/SELL ASK("+ bullSpread.buy.getOpt().getAsk()+","+ bullSpread.sell.getOpt().getAsk()+")\n"
-                + "BUY/SELL BID("+ bullSpread.buy.getOpt().getBid()+","+ bullSpread.sell.getOpt().getBid()+")\n"
-                + "///////////////////////////////////////\n"
-                + "max profit : "+ maxProfit()+"$"+"\n"
-                + "max lost : "+ maxLoss()+"$"+"\n"
-                + "percentage : "+percentage())+"%\n";
-
-
+                + "Lower  Strike "+ bullSpread.buy.getOpt().getStrike()+"\n"
+                + "Upper  Strike "+ bullSpread.sell.getOpt().getStrike()+"\n"
+                + "max profit : "+ String.format("%.2f$", maxProfit())+"\n"
+                + "max lost : "+ String.format("%.2f$", maxLoss())+"\n"
+                + "intrest rate  : "+ String.format("%.2f%%", getInterestRate())+"\n"
+                + "yearly intrest rate :"+ String.format("%.2f%%", yearlyInterestRate()))+"%\n";
         return str;
     }
-
     public int compareTo(Strategy s) {
         if(this.averageOfReturn()>s.averageOfReturn()) {return 1;}
         if(this.averageOfReturn()<s.averageOfReturn()) {return -1;}
 
         return 0;
     }
+    public  double getInterestRate(){
+        //if the result is positive it means that im get money
+        double originalLoan=price()*-1;
+        double returnLoan=Math.abs(bullSpread.buy.getOpt().getStrike()-bullSpread.sell.getOpt().getStrike());
+
+        return  ((originalLoan-returnLoan)/originalLoan)*100;
+    }
+    public  double yearlyInterestRate(){
+        //if the result is positive it means that im get money
+        return (getInterestRate()/ bullSpread.sell.getOpt().daysToExpiration())*365;
+
+    }
+
+    public boolean isDeepInTheMoney(){
+        if((bearSpread.sell.getOpt().getGreeks().getDelta()>0.7
+                || bullSpread.sell.getOpt().getGreeks().getDelta()>0.7)){
+            return  true;
+        }
+        return  false;
+    }
 
     public static void main(String[] args) {
         BearSpread bearSpread1=new BearSpread("20,7,7,C","30,1,1,C");
         BullSpread bullSpread1=new BullSpread("20,3,3,P","30,8,8,P");
+        String date="2023-09-27";
+        bullSpread1.sell.getOpt().setExpiration_date(date);
+        bearSpread1.buy.getOpt().setExpiration_date(date);
+        bearSpread1.sell.getOpt().setExpiration_date(date);
+        bearSpread1.buy.getOpt().setExpiration_date(date);
 
         ShortBoxSpread boxSpread=new ShortBoxSpread(bullSpread1,bearSpread1);
-        System.out.println(boxSpread.percentage());
+
 
         System.out.println(boxSpread.price());
         System.out.println(boxSpread.maxLoss());
+        System.out.println(boxSpread.getInterestRate());
+        System.out.println(boxSpread.yearlyInterestRate());
+        System.out.println();
     }
 }

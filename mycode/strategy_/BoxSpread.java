@@ -72,10 +72,6 @@ public class BoxSpread implements Strategy,Comparable<Strategy>{
         return (this.bearSpread.isCreditSpread() && bullSpread.isCreditSpread());
     }
 
-    @Override
-    public double percentage() {
-        return 0;
-    }
 
     public static boolean inputIsCorrect(BullSpread bullCall, BearSpread bearPut){
 

@@ -139,10 +139,7 @@ public class BullSpread implements Strategy,Comparable<Strategy>{
 		return false;
 	}
 
-	@Override
-	public double percentage() {
-		return 0;
-	}
+
 
 	public double probabilityAboveBreakEven() {
 		Option leg1=buy.getOpt();
@@ -182,17 +179,7 @@ public class BullSpread implements Strategy,Comparable<Strategy>{
 
 
 
-	public boolean isTimeToBuy(){
-		try {
-			if (sell.getOpt().getIndicator().isGoingToDown()
-					&& buy.getOpt().getIndicator().isGoingToUp()) {
-				return true;
-			}
-		} catch (NullPointerException e) {
-			return false;
-		}
-		return false;
-	}
+
 
 	public static boolean inputIsCorrect(Option opt1,Option opt2) {
 

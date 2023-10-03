@@ -58,4 +58,5 @@ public class BearSpreadTesting {
         assertEquals(-300-commission,bear2.maxLoss(),delta);
         assertEquals(3,bear2.price(),delta);
     }
+
 }

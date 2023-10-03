@@ -5,7 +5,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Date;
 
 import mycode.data.OptionContract;
-import mycode.technical_indicator.Indicator;
+import org.json.simple.JSONObject;
 
 
 public class OptionCall implements Option {
@@ -25,7 +25,6 @@ public class OptionCall implements Option {
 	private double volume;
 	private double vwap;
 
-	private Indicator indicator;
 	private long lastUpdate;
 	private int contractID;
 
@@ -172,12 +171,6 @@ public class OptionCall implements Option {
 	}
 
 
-	public Indicator getIndicator() {
-		return indicator;
-	}
-	public void setIndicator(Indicator indicator) {
-		this.indicator=indicator;
-	}
 
 	public int getContractID() {
 		return contractID;
@@ -186,8 +179,11 @@ public class OptionCall implements Option {
 	public void setContractID(int contractID) {
 		this.contractID = contractID;
 	}
-	public boolean equals(Object opt_) {
-		Option opt= (Option) opt_;
+
+
+	public boolean equals(Option opt_) {
+
+		Option opt=  opt_;
 		if (opt instanceof OptionPut)
 			return false;
 
@@ -228,6 +224,39 @@ public class OptionCall implements Option {
 				", lastUpdate=" + lastUpdate +
 				", contractID=" + contractID +
 				'}';
+	}
+
+	public void update(JSONObject json) {
+		JSONObject details = (JSONObject) json.get("details");
+		JSONObject last_quote = (JSONObject) json.get("last_quote");
+		JSONObject underlying_asset = (JSONObject) json.get("underlying_asset");
+		JSONObject day = (JSONObject) json.get("day");
+
+		setTicker(details.get("ticker").toString());
+		setStrike(Double.parseDouble(details.get("strike_price") + ""));
+		setAsk(Double.parseDouble(last_quote.get("ask") + ""));
+		setBid(Double.parseDouble((last_quote.get("bid") + "")));
+		setMid_point(Double.parseDouble((last_quote.get("midpoint") + "")));
+		setExercise_style(details.get("exercise_style") + "");
+		setExpiration_date(details.get("expiration_date") + "");
+		setLastUpdate(Long.parseLong((last_quote.get("last_updated") + "").substring(0, 13)));
+
+		if (!day.isEmpty()) {
+			setVwap(Double.parseDouble(day.get("vwap") + ""));
+			setVolume(Double.parseDouble(day.get("volume") + ""));
+		}
+		try {
+			if (getExercise_style().equals("european")) {
+				setUnderlying_ticker((underlying_asset.get("ticker")+"").substring(2));
+				setGreeks(new Greeks(0, 0, 0, 0));
+			} else {
+				setUnderlying_ticker((underlying_asset.get("ticker")+""));
+				setUnderlying_price(Double.parseDouble(underlying_asset.get("price") + ""));
+				setGreeks(new Greeks(json));
+			}
+		} catch (NullPointerException e) {
+			// Handle any exceptions or continue as needed
+		}
 	}
 
 	public  void update(Option opt) {
@@ -306,7 +335,6 @@ public class OptionCall implements Option {
 		opt.setVwap(getVwap());
 		opt.setVolume(getVolume());
 		opt.setLastUpdate(getLastUpdate());
-		opt.setIndicator(getIndicator());//not deep copy
 		return opt;
 	}
 

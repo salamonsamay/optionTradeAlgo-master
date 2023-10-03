@@ -46,7 +46,7 @@ public class LoadData implements EWrapper {
 
     public  void run(ArrayList<String> list) throws InterruptedException {
         m_s.eConnect("127.0.0.1", 4002, 0);//ib getway demo
-        //   m_s.eConnect("127.0.0.1", 7497, 0);//tws demo ACCOUNT
+        //      m_s.eConnect("127.0.0.1", 7497, 0);//tws demo ACCOUNT
         //    m_s.eConnect("127.0.0.1", 7496, 0);//tws real ACCOUNT
 //        Thread.sleep(2000);
 //        m_s.reqGlobalCancel();
@@ -209,17 +209,16 @@ public class LoadData implements EWrapper {
         String error8="-1 | 2103 | Market data farm connection is broken:usfarm";
         String error9="-1 | 1100 | Connectivity between IB and TWS has been lost.";
         String error10="-1 | 2105 | HMDS data farm connection is broken:ushmds";
-       // String error11="-1 | 2172 | The version of the application you are running, 1018.1, needs to be upgraded, as it will be desupported on 20230718. The minimum supported version at that time will be 1019.2.";
+        // String error11="-1 | 2172 | The version of the application you are running, 1018.1, needs to be upgraded, as it will be desupported on 20230718. The minimum supported version at that time will be 1019.2.";
 
         if(!value.equals(error1) && !value.equals(error2) && !value.equals(error3) && !value.equals(error4)
                 && !value.equals(error5) && !value.equals(error6) && !value.equals(error7)
-                && !value.equals(error8) && !value.equals(error9) && !value.equals(error10)
-              ){
+                && !value.equals(error8) && !value.equals(error9) && !value.equals(error10))
+        {
+
             isValid=false;
             isEnd=true;
         }
-
-
 
 
     }

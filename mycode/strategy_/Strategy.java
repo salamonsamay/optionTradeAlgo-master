@@ -46,6 +46,6 @@ public interface Strategy  {
 	Strategy deepCopy() ;
 	boolean isCreditSpread();
 
-	double percentage();
+
 
 }

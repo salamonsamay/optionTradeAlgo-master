@@ -1,8 +1,6 @@
 package mycode.strategy_;
 
-import mycode.help.Tools;
 import mycode.object.*;
-import mycode.technical_indicator.Indicator;
 
 
 /**
@@ -20,7 +18,6 @@ public class BearSpread implements Strategy,Comparable<Strategy>{
 
 	public static final double  COMMISSION=4;
 	private long lastTimeUpdae;
-
 
 	public BearSpread(){
 
@@ -66,9 +63,7 @@ public class BearSpread implements Strategy,Comparable<Strategy>{
 		this.sell=new Sell(other.sell);
 		this.buy=new Buy(other.buy);
 		//
-
 	}
-
 
 	public double maxProfit() {
 		double buyStrike=this.buy.opt.getStrike();
@@ -91,6 +86,7 @@ public class BearSpread implements Strategy,Comparable<Strategy>{
 		double sellBid=this.sell.opt.getBid();
 		double buyAsk=this.buy.opt.getAsk();
 		boolean flag=this.buy.opt instanceof OptionPut && this.sell.opt instanceof OptionPut;
+
 		if(flag) {
 
 			return (buyAsk-sellBid)*100*-1 - BearSpread.COMMISSION;
@@ -116,9 +112,6 @@ public class BearSpread implements Strategy,Comparable<Strategy>{
 	}
 
 	public double averageOfReturn() {
-		//double dif=sell.opt.getBid()/(buy.opt.getStrike()-sell.opt.getStrike());
-		//	return maxProfit()*probabilityOfMaxSuccess()+maxlose()*(1-probabilityOfMaxSuccess()-dif);
-		//return maxProfit()*probabilityOfMaxSuccess()+maxLoss()*(1-probabilityOfMaxSuccess());
 		return maxProfit()*probabilityOfMaxProfit()
 				+ maxLoss()*(probabilityOfMaxLoss()+ probabilityAboveBreakEven());
 	}
@@ -155,10 +148,6 @@ public class BearSpread implements Strategy,Comparable<Strategy>{
 		return false;
 	}
 
-	@Override
-	public double percentage() {
-		return 0;
-	}
 
 
 	public double probabilityAboveBreakEven() {
@@ -185,10 +174,7 @@ public class BearSpread implements Strategy,Comparable<Strategy>{
 	public static boolean inputIsCorrect(Option opt1,Option opt2) {
 
 
-//		if(!(opt1.getGreeks().getDelta()>0.1 && opt1.getGreeks().getDelta()<0.95
-//				&& opt2.getGreeks().getDelta()>0.1 && opt2.getGreeks().getDelta()<0.95)) {
-//			return false;
-//		}
+
 
 		boolean same_prefix=opt1.getTicker().substring(0,opt1.getTicker().length()-15).equals(opt2.getTicker().substring(0,opt2.getTicker().length()-15));
 
@@ -212,18 +198,6 @@ public class BearSpread implements Strategy,Comparable<Strategy>{
 		return 0;
 	}
 
-	public boolean isTimeToBuy() {
-		try {
-			if (sell.getOpt().getIndicator().isGoingToDown()
-					&& buy.getOpt().getIndicator().isGoingToUp()) {
-				return true;
-			}
-		} catch (NullPointerException e) {
-			return false;
-		}
-		return false;
-
-	}
 
 
 
@@ -244,7 +218,6 @@ public class BearSpread implements Strategy,Comparable<Strategy>{
 		}
 
 		String info="///////////////BEAR SPRED OPTION TYPE "+s+"\n"
-
 				+ "SELL/BUY Contract("+sell.getOpt().getTicker()+","+buy.getOpt().getTicker() + ")\n"
 				+ "SELL/BUY Expiration date("+sell.getOpt().getExpiration_date()+","+buy.getOpt().getExpiration_date()+")\n"
 				+ "SELL/BUY Strike("+sell.getOpt().getStrike()+","+buy.getOpt().getStrike()+")\n"

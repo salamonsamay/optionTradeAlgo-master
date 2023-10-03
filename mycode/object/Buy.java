@@ -89,7 +89,6 @@ public class Buy  {
 		return commission;
 	}
 
-
 	public Buy deepCopy(){
 		Buy buy=new Buy();
 		buy.opt=this.getOpt().deepCopy();
@@ -97,6 +96,4 @@ public class Buy  {
 		return  buy;
 	}
 	
-
-
 }

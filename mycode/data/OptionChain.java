@@ -1,9 +1,14 @@
 package mycode.data;
-
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.HttpClients;
+import mycode.help.Tools;
 import mycode.object.Greeks;
 import mycode.object.Option;
 import mycode.object.OptionCall;
 import mycode.object.OptionPut;
+import mycode.strategy_.Strategy;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -11,8 +16,6 @@ import org.json.simple.parser.ParseException;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.*;
 
 public class OptionChain extends  Thread{
@@ -129,156 +132,102 @@ public class OptionChain extends  Thread{
             build();
             System.out.println("build "+this.option_list.size()+" contract for "+this.underlying_ticker);
         } catch (IOException e) {
-            System.out.println("erorr with "+this.underlying_ticker);
+            System.out.println("IOException erorr with "+this.underlying_ticker);
             //	reqHistoricalData_.printStackTrace();
         } catch (ParseException e) {
-            System.out.println("erorr with "+this.underlying_ticker);
+            System.out.println("ParseException erorr with "+this.underlying_ticker);
             //	reqHistoricalData_.printStackTrace();
         }
     }
 
-    public   ArrayList<Option> build() throws IOException, ParseException {
-
+    public ArrayList<Option> build() throws IOException, ParseException {
         JSONArray array;
-        try {
-            if(limit.equals("250")){array= requestWithNextUrl(url+endPoint);//to get the  max
-            }else {
-                Object obj=new JSONParser().parse(getRequest(url+endPoint));
-                array= (JSONArray) ((JSONObject) obj).get("results");
+
+        if (limit.equals("250")) {
+            array = requestWithNextUrl(url + endPoint); // Get the max
+        } else {
+            Object obj = new JSONParser().parse(getRequest(url + endPoint));
+            array = (JSONArray) ((JSONObject) obj).get("results");
+        }
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+        ArrayList<Option> optionArray = new ArrayList<>();
+
+        for (Object item : array) {
+            JSONObject json = (JSONObject) item;
+            String contractType = null;
+            Option option;
+            try{
+                contractType = (String) ((JSONObject) json.get("details")).get("contract_type");
+                option = contractType.equals("call") ? new OptionCall() : new OptionPut();
+                option.update(json);
+                optionArray.add(option);
+            }catch (NullPointerException e) {
+                e.printStackTrace();
             }
-            failed_counter=0;
-        } catch (NoSuchElementException e){
-            System.out.println("exception "+failed_counter+" in build function");
-            failed_counter++;
-            return this.option_list;
+
         }
 
-            ArrayList<Option> optionArray = new ArrayList<>();
-            for (int i = 0; i < array.size(); i++) {
-                Option option = null;
-                if (((JSONObject) ((JSONObject) (array.get(i))).get("details")).get("contract_type").equals("call")) {
-                    option = new OptionCall();
-                } else {
-                    option = new OptionPut();
-                }
-
-                //init the option
-                JSONObject json = (JSONObject) array.get(i);
-                JSONObject details = (JSONObject) json.get("details");
-                JSONObject last_quote = (JSONObject) json.get("last_quote");
-                JSONObject underlying_asset = (JSONObject) json.get("underlying_asset");
-                JSONObject day = (JSONObject) json.get("day");
-
-                option.setUnderlying_ticker(underlying_ticker);
-                option.setTicker((details.get("ticker").toString()));
-                option.setStrike(Double.parseDouble(details.get("strike_price") + ""));
-                option.setAsk(Double.parseDouble(last_quote.get("ask") + ""));
-                option.setBid(Double.parseDouble((last_quote.get("bid") + "")));
-                option.setMid_point(Double.parseDouble((last_quote.get("midpoint") + "")));
-                option.setExercise_style((details.get("exercise_style") + ""));
-                option.setExpiration_date(details.get("expiration_date") + "");
-                option.setLastUpdate(Long.parseLong((last_quote.get("last_updated") + "").substring(0, 13)));
-                if (!day.isEmpty()) {
-                    option.setVwap(Double.parseDouble(day.get("vwap") + ""));
-                    option.setVolume(Double.parseDouble(day.get("volume") + ""));
-                } else {
-//                System.out.println("have no trade today");
-                    continue;
-                }
-
-                try {
-                    if (option.getExercise_style().equals("european") ) {
-                        option.setGreeks(new Greeks(0, 0, 0, 0));
-                    } else {
-                        option.setUnderlying_price(Double.parseDouble(underlying_asset.get("price") + ""));
-                        option.setGreeks(new Greeks(json));
-                    }
-                } catch (NullPointerException e) {
-                    continue;
-                }
-                optionArray.add(option);
-
-            }
-            if (this.option_list.size() == 0) {
-                this.option_list = optionArray;
-            } else {
-                //add all the new element in this.option_list
-                for (int i = 0; i < this.option_list.size(); i++) {
-                    for (int j = 0; j < optionArray.size(); j++) {
-
-                        if (this.option_list.get(i).equals(optionArray.get(j))) {
-                            this.option_list.get(i).update(optionArray.get(j));
-                            i++;
-                            break;
-                        }
+        if (this.option_list.isEmpty()) {
+            this.option_list = optionArray;
+        } else {
+            // Update existing elements in this.option_list with new data
+            for (Option existingOption : this.option_list) {
+                for (Option newOption : optionArray) {
+                    if (existingOption.equals(newOption)) {
+                        existingOption.update(newOption);
                     }
                 }
             }
+        }
 
-
-            return optionArray;
-
+        return optionArray;
     }
 
-    private JSONArray requestWithNextUrl(String url) throws IOException, ParseException {
-        String result= getRequest(url);
-        Object obj=new JSONParser().parse(result);
-        JSONObject json= (JSONObject) obj;
-        JSONArray jsonArray=new JSONArray();
 
-        if(json.get("next_url")==null){
-            jsonArray= (JSONArray) json.get("results");
-            return jsonArray;
-        }
-        while(json.get("next_url")!=null){
 
-            JSONArray temp= (JSONArray) json.get("results");
-            for(int i=0;i<temp.size();i++) {
-                jsonArray.add(temp.get(i));
+    public JSONArray requestWithNextUrl(String url) throws IOException, ParseException {
+        JSONArray jsonArray = new JSONArray();
+
+        while (url != null) {
+            String result = getRequest(url);
+            JSONObject json = (JSONObject) new JSONParser().parse(result);
+
+            if (json.containsKey("results")) {
+                jsonArray.addAll((JSONArray) json.get("results"));
             }
-            result= getRequest(json.get("next_url")+"&apiKey="+API_kEY);
-            obj=new JSONParser().parse(result);
-            json= (JSONObject) obj;
 
+            url = (String) json.get("next_url");
         }
+
         return jsonArray;
     }
 
-    public   String getRequest(String url2) throws IOException ,NoSuchElementException{
-        URL url;
-        url = new URL(url2);
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        conn.setRequestMethod("GET");
-        conn.setConnectTimeout(500000);
-        conn.setReadTimeout(500000);
+    public String getRequest(String url) throws IOException,RuntimeException{
+        HttpClient httpClient = HttpClients.createDefault();
+        HttpGet httpGet = new HttpGet(url + "&apiKey=" + API_kEY);
 
-        //Check if connect is made
-        int responseCode = conn.getResponseCode();
-        if (responseCode != 200) {
-            throw new RuntimeException("HttpResponseCode: " + responseCode);
+        HttpResponse response = httpClient.execute(httpGet);
+
+        int statusCode = response.getStatusLine().getStatusCode();
+        if (statusCode != 200) {
+            throw new RuntimeException("HttpResponseCode: " + statusCode);
         }
-        Scanner in=new Scanner(new InputStreamReader(conn.getInputStream()));
 
-        String result=in.next();
-        in.close();
-        conn.disconnect();
-        return result;
+        try (Scanner scanner = new Scanner(new InputStreamReader(response.getEntity().getContent()))) {
+            return scanner.useDelimiter("\\A").next();
+        }
     }
 
     public void updateProcess()  {
         new Thread(new Runnable() {
-
             public void run() {
 
                 while (failed_counter<3){
                     try {
                         build();
-                    } catch (IOException e) {
-//                        reqHistoricalData_.printStackTrace();
-                        continue;
-                    } catch (ParseException e) {
-//                        reqHistoricalData_.printStackTrace();
-                        continue;
+                        failed_counter=0;
+                    } catch (IOException | ParseException e) {
+                        failed_counter++;
                     }
                     try {
                         int r=(int)(Math.random()*5)+1;
@@ -294,10 +243,7 @@ public class OptionChain extends  Thread{
 
     }
 
-
-
-
-    public static void main(String[] args) throws IOException, ParseException, InterruptedException {
+    public static void main(String[] args){
 
     }
 

@@ -19,11 +19,19 @@ public class PolygonIO {
         };
         WebSockets wsClient = new WebSockets("YLMlOppNufEGaHogyZpL2Bh9b3eC2v4U", messageHandler);
 
-           wsClient.connect("options");
+//           wsClient.connect("options");
+           wsClient.connect("stocks");
 
 
-        wsClient.subscribe("Q.O:META230317C00165000");
-        while (true){}
+//        wsClient.subscribe("Q.O:META230317C00165000");
+        wsClient.subscribe("A.*");
+        while (true){
+            try {
+                Thread.sleep(20000);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
     public static class Rest {
 
@@ -56,7 +64,8 @@ public class PolygonIO {
 
         public static Queue<String> DATA=new LinkedList<>();
         private String apiKey;
-        private String endpoint = "wss://socket.polygon.io/";
+//        private String endpoint = "wss://socket.polygon.io/";
+        private String endpoint = "wss://delayed.polygon.io/";
         private WebSocket webSocket;
         Function<String, String> function;
 
@@ -118,7 +127,7 @@ public class PolygonIO {
                 this.function.apply(data.toString());
                 WebSockets.DATA.add(data.toString());
                 WebSockets.this.webSocket = webSocket;
-
+                System.out.println("onText");
                 return WebSocket.Listener.super.onText(webSocket, data, last);
             }
 

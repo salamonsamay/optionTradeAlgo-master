@@ -83,25 +83,35 @@ public class AggregatesRequest {
 
 
     public   ArrayList<AggregatesObject> build() throws IOException, ParseException {
-        System.out.println(url+endPoint);
-        String   data = getRequest(url+endPoint);
+        String data= null;
+        JSONArray array=null;
+        if(this.limit.equals("50000")){
+            array= requestWithNextUrl(url+endPoint);
+        }
+        else{
+            data = getRequest(url+endPoint);
+            JSONParser parser=new JSONParser();
+            Object obj= null;
+            obj = parser.parse(data);
+            JSONObject json=(JSONObject)obj;
+            array=(JSONArray) (json.get("results"));
+        }
 
-        JSONParser parser=new JSONParser();
-        Object obj= null;
 
-        obj = parser.parse(data);
-
-        JSONObject json=(JSONObject)obj;
-        JSONArray array=(JSONArray) (json.get("results"));
         ArrayList<AggregatesObject> aggList=new ArrayList<>();
         System.out.println(array.size());
         for(int i=0;i<array.size();i++){
-            JSONObject index= (JSONObject) array.get(i);
-            aggList.add(new AggregatesObject(optionsTicker,Double.parseDouble( index.get("vw")+""), (Double.parseDouble(index.get("c")+""))
-                    , Long.parseLong( index.get("t")+""), Double.parseDouble( index.get("v")+"")
-                    , Double.parseDouble( index.get("h")+""), Double.parseDouble(index.get("l")+"")
-                    , Integer.parseInt(index.get("n")+""), Double.parseDouble( index.get("o")+"")));
-            System.out.println(array.get(i));
+            try {
+                JSONObject index= (JSONObject) array.get(i);
+                aggList.add(new AggregatesObject(optionsTicker,Double.parseDouble( index.get("vw")+""), (Double.parseDouble(index.get("c")+""))
+                        , Long.parseLong( index.get("t")+""), Double.parseDouble( index.get("v")+"")
+                        , Double.parseDouble( index.get("h")+""), Double.parseDouble(index.get("l")+"")
+                        , Integer.parseInt(index.get("n")+""), Double.parseDouble( index.get("o")+"")));
+                System.out.println(array.get(i));
+            }catch (NumberFormatException e){
+                e.printStackTrace();
+            }
+
         }
         System.out.println(array.size());
         return aggList;
@@ -109,36 +119,37 @@ public class AggregatesRequest {
     }
 
     private JSONArray requestWithNextUrl(String url) throws IOException, ParseException {
-        String result= getRequest(url);
-        Object obj=new JSONParser().parse(result);
-        JSONObject json= (JSONObject) obj;
-        JSONArray jsonArray=new JSONArray();
-
-        if(json.get("next_url")==null){
-            jsonArray= (JSONArray) json.get("results");
-            return jsonArray;
-        }
-        while(json.get("next_url")!=null){
-
-            JSONArray temp= (JSONArray) json.get("results");
-            for(int i=0;i<temp.size();i++) {
-                jsonArray.add(temp.get(i));
+        String new_response= getRequest(url);
+        Object obj=new JSONParser().parse(new_response);
+        JSONObject response= (JSONObject) obj;
+        JSONArray all_response_results=new JSONArray();
+        JSONArray results;
+        while(response.get("next_url")!=null){//have more data
+             results= (JSONArray) response.get("results");
+            for(int i=0;i<results.size();i++) {
+                all_response_results.add(results.get(i));
             }
-            result= getRequest(json.get("next_url")+"&apiKey="+API_kEY);
-            obj=new JSONParser().parse(result);
-            json= (JSONObject) obj;
+            new_response= getRequest(response.get("next_url")+"&apiKey="+API_kEY);
+            obj=new JSONParser().parse(new_response);
+            response= (JSONObject) obj;
 
         }
-        return jsonArray;
+        results= (JSONArray) response.get("results");
+        for(int i=0;i<results.size();i++) {
+            all_response_results.add(results.get(i));
+        }
+        System.out.println("size of results "+all_response_results.size());
+        return all_response_results;
     }
 
     public   String getRequest(String url2) throws IOException ,NoSuchElementException{
+        System.out.println(url2);
         URL url;
         url = new URL(url2);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setRequestMethod("GET");
-        conn.setConnectTimeout(500000);
-        conn.setReadTimeout(500000);
+        conn.setConnectTimeout(50000);
+        conn.setReadTimeout(50000);
 
         //Check if connect is made
         int responseCode = conn.getResponseCode();
@@ -154,8 +165,11 @@ public class AggregatesRequest {
     }
 
     public static void main(String[] args) throws IOException, ParseException {
-        AggregatesRequest aggregates=new AggregatesRequest("O:SPY230303C00400000");
-        aggregates.From("2023-02-26").To("2023-03-03").endPoint().build();
+        AggregatesRequest aggregates=new AggregatesRequest("AAPL");
+        aggregates.From("2022-02-26").To("2023-03-03").Timespan("day").endPoint().build();
+        AggregatesObject object=aggregates.build().get(0);
+        System.out.println(object.getVwap());
+
 
     }
 
