@@ -36,10 +36,10 @@ public class MySQL {
     public static List<AggregatesObject> selectStar(String ticker) {
         connect();
         List<AggregatesObject> aggregatesList = new ArrayList<>();
-        String query = "SELECT ticker, vwap, close_price, timespan, volume, highest_price, lowest_price, " +
+        String query = "SELECT ticker, vwap, close_price, Timespan, volume, highest_price, lowest_price, " +
                 "number_of_transactions, open_price FROM AGGREGATES" +
                 " WHERE ticker = '" + ticker + "'" +
-                "GROUP BY ticker,timespan";
+                "GROUP BY ticker,Timespan";
 
         try (Connection connection = connect();
              PreparedStatement preparedStatement = connection.prepareStatement(query);
@@ -50,7 +50,7 @@ public class MySQL {
                 aggObject.setOptionsTicker(resultSet.getString("ticker"));
                 aggObject.setVwap(resultSet.getDouble("vwap"));
                 aggObject.setClose_price(resultSet.getDouble("close_price"));
-                aggObject.setTimestamp(resultSet.getLong("timespan"));
+                aggObject.setTimestamp(resultSet.getLong("Timespan"));
                 aggObject.setVolume(resultSet.getDouble("volume"));
                 aggObject.setHighest_price(resultSet.getDouble("highest_price"));
                 aggObject.setLowest_price(resultSet.getDouble("lowest_price"));
@@ -67,9 +67,10 @@ public class MySQL {
         return aggregatesList;
     }
 
+
     public  static void insertSMA(SMAObject smaObject){
 
-        String query="INSERT INTO SMA(ticker,timespan,value_) VALUES(?,?,?)";
+        String query="INSERT INTO SMA(ticker,Timespan,value_) VALUES(?,?,?)";
         PreparedStatement prepared = null;
         try {
             prepared = connect().prepareStatement(query);
@@ -90,7 +91,7 @@ public class MySQL {
 
 
     public  static void insertRSI(RSIObject rsiObject){
-        String query="INSERT INTO RSI(ticker,timespan,value_) VALUES(?,?,?)";
+        String query="INSERT INTO RSI(ticker,Timespan,value_) VALUES(?,?,?)";
         PreparedStatement prepared = null;
         try {
             prepared = connect().prepareStatement(query);
@@ -108,7 +109,7 @@ public class MySQL {
     }
     public static void insertAggregates(AggregatesObject aggObject){
         //    aggObject.get
-        String query="INSERT INTO AGGREGATES(ticker,vwap,close_price,timespan,volume,highest_price," +
+        String query="INSERT INTO AGGREGATES(ticker,vwap,close_price,Timespan,volume,highest_price," +
                 "lowest_price,number_of_transactions,open_price) VALUES(?,?,?,?,?,?,?,?,?)";
         PreparedStatement prepared = null;
 

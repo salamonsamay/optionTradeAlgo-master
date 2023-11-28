@@ -198,7 +198,7 @@ public class StockRequest {
 //        for(String a:arr){
 //            System.out.println(a);
 //            StockRequest stock_request=new StockRequest(a);
-//            stock_request.From("2023-02-01").To("2023-04-10").endPoint();
+//            stock_request.From("2023-02-01").To("2023-04-10").EndPoint();
 //            ArrayList<StockObject> stockList=stock_request.build();
 //            LinearEquation linearEquation=new LinearEquation();
 //            linearEquation.buildLinearRegression(stockList);

@@ -13,31 +13,12 @@ import java.util.stream.Collectors;
 public class BuildStrategy {
 
 
-
-
-	public static ArrayList<ShortBoxSpread> shortBoxSpread(ArrayList<BullSpread> bullList, ArrayList<BearSpread> bearList,double spread_diff ){
-
-		ArrayList<ShortBoxSpread> shortBoxSpreadsList=new ArrayList<>();
-
-
-		for(int i=0;i<bullList.size();i++) {
-
-			for(int j=0;j<bearList.size();j++) {
-//                if(bullList.get(i).buy.getOpt().getStrike()<bearList.get(j).sell.getOpt().getStrike()){
-//					i++;
-//				break;
-//				}
-				if(Math.abs(bearList.get(j).buy.getOpt().getStrike()-bearList.get(j).sell.getOpt().getStrike())>spread_diff){
-					continue;
-				}
-				if(ShortBoxSpread.inputIsCorrect(bullList.get(i),bearList.get(j))) {
-
-					shortBoxSpreadsList.add(new ShortBoxSpread(bullList.get(i),bearList.get(j)));
-				}
-			}
-		}
-		System.out.println("build "+shortBoxSpreadsList.size()+" short boxSpread");
-		return shortBoxSpreadsList;
+	public static List<Reversal> reversal(List<Option> list) {
+		return list.stream()
+				.flatMap(option1 -> list.stream()
+						.filter(option2 -> Reversal.inputIsCorrect(option1, option2))
+						.map(option2 -> new Reversal(option1, option2)))
+				.collect(Collectors.toList());
 	}
 
 	public static ArrayList<ShortBoxSpread> shortBoxSpread2(ArrayList<BullSpread> bullList, ArrayList<BearSpread> bearList,double spread_diff ){
@@ -69,26 +50,34 @@ public class BuildStrategy {
 		return shortBoxSpreadsList;
 	}
 
+	public static ArrayList<ShortBoxSpread> shortBoxSpread(ArrayList<BullSpread> bullList, ArrayList<BearSpread> bearList,double spread_diff ){
+
+		ArrayList<ShortBoxSpread> shortBoxSpreadsList=new ArrayList<>();
+
+
+		for(int i=0;i<bullList.size();i++) {
+
+			for(int j=0;j<bearList.size();j++) {
+//                if(bullList.get(i).buy.getOpt().getStrike()<bearList.get(j).sell.getOpt().getStrike()){
+//					i++;
+//				break;
+//				}
+				if(Math.abs(bearList.get(j).buy.getOpt().getStrike()-bearList.get(j).sell.getOpt().getStrike())>spread_diff){
+					continue;
+				}
+				if(ShortBoxSpread.inputIsCorrect(bullList.get(i),bearList.get(j))) {
+
+					shortBoxSpreadsList.add(new ShortBoxSpread(bullList.get(i),bearList.get(j)));
+				}
+			}
+		}
+		System.out.println("build "+shortBoxSpreadsList.size()+" short boxSpread");
+		return shortBoxSpreadsList;
+	}
 	public static ArrayList<ShortBoxSpread> shortBoxSpread(ArrayList<BullSpread> bullList, ArrayList<BearSpread> bearList){
 		return  shortBoxSpread(bullList,bearList,100000);
 	}
 
-	public static ArrayList<LongBoxSpread> longBoxSpread(ArrayList<BullSpread> bullList, ArrayList<BearSpread> bearList,double spread_diff ){
-		ArrayList<LongBoxSpread> longBoxSpreadsList=new ArrayList<>();
-		for(int i=0;i<bullList.size();i++) {
-			for(int j=0;j<bearList.size();j++) {
-				if(Math.abs(bearList.get(j).buy.getOpt().getStrike()-bearList.get(j).sell.getOpt().getStrike())>spread_diff){
-					continue;
-				}
-				if(LongBoxSpread.inputIsCorrect(bullList.get(i),bearList.get(j)))
-				{
-					longBoxSpreadsList.add(new LongBoxSpread(bullList.get(i),bearList.get(j)));
-				}
-			}
-		}
-		System.out.println("build "+longBoxSpreadsList.size()+" long boxSpread");
-		return longBoxSpreadsList;
-	}
 
 	public static ArrayList<LongBoxSpread> longBoxSpread2(ArrayList<BullSpread> bullList, ArrayList<BearSpread> bearList, double spread_diff) {
 		Map<String, List<BullSpread>> bullMap = bullList.stream().collect(Collectors.groupingBy(Tools::getGroup));
@@ -117,7 +106,22 @@ public class BuildStrategy {
 
 		return longBoxSpreadsList;
 	}
-
+	public static ArrayList<LongBoxSpread> longBoxSpread(ArrayList<BullSpread> bullList, ArrayList<BearSpread> bearList,double spread_diff ){
+		ArrayList<LongBoxSpread> longBoxSpreadsList=new ArrayList<>();
+		for(int i=0;i<bullList.size();i++) {
+			for(int j=0;j<bearList.size();j++) {
+				if(Math.abs(bearList.get(j).buy.getOpt().getStrike()-bearList.get(j).sell.getOpt().getStrike())>spread_diff){
+					continue;
+				}
+				if(LongBoxSpread.inputIsCorrect(bullList.get(i),bearList.get(j)))
+				{
+					longBoxSpreadsList.add(new LongBoxSpread(bullList.get(i),bearList.get(j)));
+				}
+			}
+		}
+		System.out.println("build "+longBoxSpreadsList.size()+" long boxSpread");
+		return longBoxSpreadsList;
+	}
 	public static  ArrayList<LongBoxSpread> longBoxSpread(ArrayList<BullSpread> bullList, ArrayList<BearSpread> bearList){
 		return longBoxSpread(bullList,bearList, 100000);
 	}
@@ -216,26 +220,6 @@ public class BuildStrategy {
 		return bearSpread(list,100000);
 	}
 
-	/**
-	 *
-	 * @param list-call/put option list
-	 * @return list that every index represent credit bearSpread strategy
-	 */
-	public static ArrayList<BearSpread> bearSpreadCall(ArrayList<Option> list) {
-		ArrayList<BearSpread> bear_list=new ArrayList<>();
-		for (int i=0;i<list.size()-1;i++) {
-			for(int j=i+1;j<list.size();j++) {
-				if(BearSpread.inputIsCorrect(list.get(i),list.get(j))
-						&& list.get(i) instanceof OptionCall && list.get(j) instanceof OptionCall) {
-
-					bear_list.add(new BearSpread(new Sell(list.get(i)), new Buy(list.get(j))));
-				}
-				else {j=list.size();}
-			}
-		}
-		return bear_list;
-
-	}
 
 	/**
 	 *
@@ -268,22 +252,6 @@ public class BuildStrategy {
 		return bullSpread(list,1000000);
 	}
 
-	public  static ArrayList<BullSpread> bullSpreadPut(ArrayList<Option> list) {
-		ArrayList<BullSpread> bullList=new ArrayList<BullSpread>();
 
-		for (int i=0;i<list.size()-1;i++) {
-			for(int j=i+1;j<list.size();j++) {
-				if(BullSpread.inputIsCorrect(list.get(i),list.get(j))
-						&& list.get(i) instanceof OptionPut && list.get(j) instanceof OptionPut) {
-
-					bullList.add(new BullSpread(new Buy(list.get(i)), new Sell(list.get(j))));
-				}
-				else {j=list.size();}
-			}
-		}
-		//
-		return bullList;
-
-	}
 
 }

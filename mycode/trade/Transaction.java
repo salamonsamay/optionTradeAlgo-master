@@ -2,9 +2,8 @@ package mycode.trade;
 
 import com.ib.client.*;
 import mycode.help.Configurations;
-import mycode.help.MyMath;
+import mycode.help.Tools;
 import mycode.object.Option;
-import mycode.object.SMAObject;
 import mycode.strategy_.*;
 import samples.testbed.orders.OrderSamples;
 
@@ -148,11 +147,11 @@ public class Transaction {
 
         return  contract;
     }
-    public static Contract createContractOpt(String symbol){
+    public static Contract createOptContract(String symbol){
         Contract contract =new Contract();
         contract.symbol(symbol);
         //  contract.conid(609954644);
-        contract.lastTradeDateOrContractMonth("202402");
+        contract.lastTradeDateOrContractMonth("202310");
         contract.secType("OPT");
         contract.exchange("SMART");
         contract.currency("USD");
@@ -184,13 +183,9 @@ public class Transaction {
 
         if(strategy instanceof ShortBoxSpread ){
             int bull_buy_conid=((ShortBoxSpread) strategy).bullSpread.buy.getOpt().getContractId();
-//            System.out.println(((ShortBoxSpread) strategy).bullSpread.buy.getOpt().getContractId());
             int bull_sell_conid=((ShortBoxSpread) strategy).bullSpread.sell.getOpt().getContractId();
-//            System.out.println(((ShortBoxSpread) strategy).bullSpread.sell.getOpt().getContractId());
             int bear_sell_conid=((ShortBoxSpread) strategy).bearSpread.sell.getOpt().getContractId();
-//            System.out.println(((ShortBoxSpread) strategy).bearSpread.sell.getOpt().getContractId());
             int bear_buy_conid=((ShortBoxSpread) strategy).bearSpread.buy.getOpt().getContractId();
-//            System.out.println(((ShortBoxSpread) strategy).bearSpread.buy.getOpt().getContractId());
 
             return comboBoxSpred(strategy.getCompanySymbol(),bull_buy_conid,bull_sell_conid,bear_sell_conid,bear_buy_conid);
         }
@@ -214,8 +209,16 @@ public class Transaction {
 
             return comboBoxSpred(strategy.getCompanySymbol(),bull_buy_conid,bull_sell_conid,bear_sell_conid,bear_buy_conid);
         }
+        if(strategy instanceof Reversal){
+            int buyCallConID=((Reversal) strategy).syntheticLong.buy.getOpt().getContractId();
+            int sellPutConID=((Reversal) strategy).syntheticLong.sell.getOpt().getContractId();
+            return comboSyntheticLong(strategy.getCompanySymbol(),buyCallConID,sellPutConID);
+        }
+
         return null;
     }
+
+
 
     public static ArrayList<Contract> singleContract(Strategy strategy){
 
@@ -346,6 +349,41 @@ public class Transaction {
 
         addAllLegs.add(leg1);
         addAllLegs.add(leg2);
+        contract.comboLegs(addAllLegs);
+        return contract;
+    }
+
+    public static Contract comboSyntheticLong(String symbol, int buyCallConID, int sellPutConID) {
+        Contract contract = new Contract();
+        contract.symbol(symbol);
+        contract.secType("BAG");
+        contract.currency("USD");
+        contract.exchange("SMART");
+
+        ComboLeg leg1 = new ComboLeg();
+        ComboLeg leg2 = new ComboLeg();
+        ComboLeg leg3 = new ComboLeg();
+        List<ComboLeg> addAllLegs = new ArrayList<>();
+
+        leg1.conid(buyCallConID);
+        leg1.ratio(1);
+        leg1.action("BUY");
+        leg1.exchange("SMART");
+
+        leg2.conid(sellPutConID);
+        leg2.ratio(1);
+        leg2.action("SELL");
+        leg2.exchange("SMART");
+
+
+        leg3.conid(Integer.parseInt(Tools.getTickerId(symbol)));
+        leg3.ratio(100);
+        leg3.action("SELL");
+        leg3.exchange("SMART");
+
+        addAllLegs.add(leg1);
+        addAllLegs.add(leg2);
+        addAllLegs.add(leg3);
         contract.comboLegs(addAllLegs);
         return contract;
     }

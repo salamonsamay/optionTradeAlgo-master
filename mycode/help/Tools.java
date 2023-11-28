@@ -1,24 +1,16 @@
 package mycode.help;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.PrintWriter;
+import mycode.data.LoadData;
+import mycode.data.OptionChain;
+import mycode.object.Option;
+import mycode.strategy_.*;
 
+import java.io.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.stream.Collectors;
-
-
-import mycode.data.LoadData;
-import mycode.data.OptionChain;
-import mycode.object.Option;
-import mycode.object.Pair;
-import mycode.strategy_.*;
-import mycode.trade.Main;
 
 
 public class Tools {
@@ -29,10 +21,65 @@ public class Tools {
 
     //contain  the  strategy info  that sended
     public  static Hashtable<Integer,String> sendedOrder=new Hashtable<>();
+    private static final Map<String, String> tickerMap = new HashMap<>();
 
-    public static final String PATH ="read_file/indices/";
+    static {
+        tickerMap.put("AAP", "4027");
+        tickerMap.put("AAPL", "265598");
+        tickerMap.put("ABNB", "459530964");
+        tickerMap.put("ADBE", "265768");
+        tickerMap.put("AMD", "4391");
+        tickerMap.put("AMZN", "3691937");
+        tickerMap.put("BA", "4762");
+        tickerMap.put("BABA", "166090175");
+        tickerMap.put("BAC", "10098");
+        tickerMap.put("BOIL", "635944944");
+        tickerMap.put("CAT", "5437");
+        tickerMap.put("CCL", "5437");
+        tickerMap.put("COIN", "481691285");
+        tickerMap.put("DIA", "73128548");
+        tickerMap.put("DIS", "6459");
+        tickerMap.put("ENPH", "105368327");
+        tickerMap.put("F", "9599491");
+        tickerMap.put("FDX", "5100583");
+        tickerMap.put("GLD", "51529211");
+        tickerMap.put("GME", "36285627");
+        tickerMap.put("GOOG", "208813720");
+        tickerMap.put("GOOGL", "208813719");
+        tickerMap.put("HYG", "43652089");
+        tickerMap.put("IWM", "9579970");
+        tickerMap.put("JPM", "1520593");
+        tickerMap.put("LCID", "504716446");
+        tickerMap.put("META", "107113386");
+        tickerMap.put("MO", "9769");
+        tickerMap.put("MRNA", "344809106");
+        tickerMap.put("MSFT", "272093");
+        tickerMap.put("NFLX", "15124833");
+        tickerMap.put("NIO", "332794741");
+        tickerMap.put("NKE", "10291");
+        tickerMap.put("NVDA", "4815747");
+        tickerMap.put("PLTR", "444857009");
+        tickerMap.put("PYPL", "199169591");
+        tickerMap.put("QQQ", "320227571");
+        tickerMap.put("ROKU", "290651477");
+        tickerMap.put("SHOP", "195014116");
+        tickerMap.put("SLV", "39039301");
+        tickerMap.put("SNAP", "268060148");
+        tickerMap.put("SPY", "756733");
+        tickerMap.put("SQ", "212671971");
+        tickerMap.put("SQQQ", "537765515");
+        tickerMap.put("TLT", "15547841");
+        tickerMap.put("TSLA", "76792991");
+        tickerMap.put("UNG", "300917700");
+        tickerMap.put("WFC", "10375");
+        tickerMap.put("WMT", "13824");
+        tickerMap.put("XOM", "13977");
+        tickerMap.put("SPX", "416904");
+    }
+
+    public static final String PATH ="read_file/liquid/";
     public static  String  DATE_START = "2023-10-01";
-    public static  String  DATE_END = "2023-10-07";
+    public static  String  DATE_END = "2024-12-07";
 
 
     public static ArrayList<String> readCompanyFromFile(){
@@ -41,9 +88,11 @@ public class Tools {
 
         String symbols[]=file.list();
         boolean flag=false;
+
         for(int i=0;i<symbols.length;i++){
 
             String symbol=symbols[i].substring(0,symbols[i].indexOf('.'));
+
             companyList.add(symbol);
 
         }
@@ -59,7 +108,7 @@ public class Tools {
      * @throws FileNotFoundException If option data files are not found or an error occurs during data retrieval.
      */
     public static ArrayList<Option> getOptions(ArrayList<String> company_list) throws FileNotFoundException {
-        // Create a list to store OptionChain instances for each company.
+        // Create a list to store SMA instances for each company.
         ArrayList<OptionChain> option_chain_list = new ArrayList<>();
 
         // Create a thread pool for concurrent data retrieval.
@@ -69,20 +118,20 @@ public class Tools {
         for (int i = 0; i < company_list.size(); i++) {
             // Check if the company has ex-dividend dates within the specified date range.
             if (!Tools.haveExDividend(company_list.get(i))) {
-                // Create an OptionChain instance for the current company.
+                // Create an SMA instance for the current company.
                 OptionChain option_chain = new OptionChain(company_list.get(i));
 
-                // Configure the OptionChain with limit, expiration date range, and other options.
+                // Configure the SMA with limit, expiration date range, and other options.
                 option_chain
                         .Limit("250")
                         .Expiriation_date_gt(Tools.DATE_START)
                         .Expiriation_date_lt(Tools.DATE_END)
                         .endPoint();
 
-                // Add the OptionChain to the list for concurrent processing.
+                // Add the SMA to the list for concurrent processing.
                 option_chain_list.add(option_chain);
 
-                // Execute the OptionChain retrieval in a separate thread.
+                // Execute the SMA retrieval in a separate thread.
                 pool.execute(option_chain);
             }
         }
@@ -100,7 +149,7 @@ public class Tools {
         // Create a list to store retrieved Option objects.
         ArrayList<Option> options_list = new ArrayList<>();
 
-        // Iterate through the OptionChain instances and retrieve their Option data.
+        // Iterate through the SMA instances and retrieve their Option data.
         for (int i = 0; i < option_chain_list.size(); i++) {
             options_list.addAll(option_chain_list.get(i).option_list);
             option_chain_list.get(i).updateProcess();
@@ -108,7 +157,7 @@ public class Tools {
         }
 //        option_chain_list.stream()
 //                .peek(optionChain -> options_list.addAll(optionChain.option_list))
-//                .forEach(OptionChain::updateProcess);
+//                .forEach(SMA::updateProcess);
 
         return options_list;
     }
@@ -140,6 +189,16 @@ public class Tools {
         return null;
     }
 
+
+    /**
+     * every company have a  unique ticker id.
+     *the function take company  ticker and  return the company id
+     * @param tickerName
+     * @return company id
+     */
+    public static String getTickerId(String tickerName) {
+        return tickerMap.get(tickerName);
+    }
     public static boolean isValidData(Strategy strategy){
         if(strategy instanceof  BearSpread ){
             return isValidData(((BearSpread) strategy).sell.getOpt())
@@ -160,6 +219,9 @@ public class Tools {
         if(strategy instanceof  LongBoxSpread ){
             return  isValidData(((LongBoxSpread) strategy).bearSpread)
                     && isValidData(((LongBoxSpread) strategy).bullSpread);
+        }
+        if(strategy instanceof  Reversal ){
+            return  isValidData(((Reversal) strategy).syntheticLong.buy.getOpt()) && isValidData(((Reversal) strategy).syntheticLong.sell.getOpt());
         }
         throw new RuntimeException();
 

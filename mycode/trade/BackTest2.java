@@ -555,7 +555,7 @@ public class BackTest2 {
     }
     public static void main(String[] args) throws IOException, ParseException, InterruptedException {
 //        StockRequest request=new StockRequest("AMD");
-//        ArrayList<StockObject> stockObjects=request.From("2022-01-16").To("2023-05-29").endPoint().build();
+//        ArrayList<StockObject> stockObjects=request.From("2022-01-16").To("2023-05-29").EndPoint().build();
 
 
 //

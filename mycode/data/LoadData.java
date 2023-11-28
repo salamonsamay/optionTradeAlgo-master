@@ -41,13 +41,14 @@ public class LoadData implements EWrapper {
         LoadData loadData=new LoadData();
         ArrayList<String> symbols=Tools.readCompanyFromFile();
 
+        // loadData.run2("SPY");
         loadData.run(symbols);
     }
 
     public  void run(ArrayList<String> list) throws InterruptedException {
         m_s.eConnect("127.0.0.1", 4002, 0);//ib getway demo
-        //      m_s.eConnect("127.0.0.1", 7497, 0);//tws demo ACCOUNT
-        //    m_s.eConnect("127.0.0.1", 7496, 0);//tws real ACCOUNT
+        //    m_s.eConnect("127.0.0.1", 7497, 0);//tws demo ACCOUNT
+        //   m_s.eConnect("127.0.0.1", 7496, 0);//tws real ACCOUNT
 //        Thread.sleep(2000);
 //        m_s.reqGlobalCancel();
 
@@ -79,7 +80,7 @@ public class LoadData implements EWrapper {
 
         for(int i=0;i<list.size();i++){
             String symbol=list.get(i);
-            m_s.reqContractDetails(251, Transaction.createContractOpt(symbol));
+            m_s.reqContractDetails(251, Transaction.createOptContract(symbol));
             System.out.println("start :"+symbol);
 
             while(!isEnd){
@@ -130,8 +131,8 @@ public class LoadData implements EWrapper {
     }
 
     public void run2(String symbol){
-        m_s.eConnect("127.0.0.1", 4002, 0);//ib getway demo
-        //   m_s.eConnect("127.0.0.1", 7497, 0);//tws getway demo
+        //  m_s.eConnect("127.0.0.1", 4002, 0);//ib getway demo
+        m_s.eConnect("127.0.0.1", 7497, 0);//tws getway demo
 
         final EReader reader = new EReader(m_s, m_signal);
 
@@ -158,7 +159,7 @@ public class LoadData implements EWrapper {
             sleep(1000);
         }
 
-        m_s.reqContractDetails(251, Transaction.createContractOpt(symbol));
+        m_s.reqContractDetails(251, Transaction.createOptContract(symbol));
         while(!isEnd){
             try {
                 Thread.sleep(2000);
@@ -166,22 +167,9 @@ public class LoadData implements EWrapper {
                 throw new RuntimeException(e);
             }
         }
+        System.out.println("----------------------------------------------------------------");
+        System.out.println(data);
 
-        File f=new File(Tools.PATH+symbol+".txt");
-        try {
-            System.out.println("start write "+symbol);
-            PrintWriter pw=new PrintWriter(f);
-            System.out.println();
-            pw.print(data);
-            data="";
-            pw.close();
-            System.out.println("end write "+symbol);
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-        System.out.println("start convert "+symbol);
-        Tools.extract_and_write_contractID(symbol);
-        System.out.println("end convert "+symbol);
     }
 
 
@@ -291,7 +279,7 @@ public class LoadData implements EWrapper {
     }
 
     @Override public void contractDetails(int reqId, ContractDetails contractDetails) {
-        //  System.out.println(EWrapperMsgGenerator.contractDetails( reqId, contractDetails));
+        System.out.println(EWrapperMsgGenerator.contractDetails( reqId, contractDetails));
         data+=EWrapperMsgGenerator.contractDetails( reqId, contractDetails)+"\n";
 
     }

@@ -165,7 +165,7 @@ class TicketDlg extends JDialog {
 	private void onTransmitOrder() {
 		scrape();
 		
-		// close window right away for mods
+		// close Window right away for mods
 		if (m_order.orderId() != 0) {
 			dispose();
 		}

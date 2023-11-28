@@ -1,5 +1,6 @@
 package mycode.data;
 
+import mycode.indicators.SMA;
 import mycode.object.AggregatesObject;
 import mycode.object.Option;
 import org.json.simple.JSONArray;
@@ -7,11 +8,13 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
+import javax.swing.text.html.HTMLDocument;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 
@@ -125,7 +128,7 @@ public class AggregatesRequest {
         JSONArray all_response_results=new JSONArray();
         JSONArray results;
         while(response.get("next_url")!=null){//have more data
-             results= (JSONArray) response.get("results");
+            results= (JSONArray) response.get("results");
             for(int i=0;i<results.size();i++) {
                 all_response_results.add(results.get(i));
             }
@@ -154,7 +157,15 @@ public class AggregatesRequest {
         //Check if connect is made
         int responseCode = conn.getResponseCode();
         if (responseCode != 200) {
-            throw new RuntimeException("HttpResponseCode: " + responseCode);
+            if(responseCode==429){
+                try {
+                    System.out.println("sleep 1 minute");
+                    Thread.sleep(1000*60);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            else throw new RuntimeException("HttpResponseCode: " + responseCode);
         }
         Scanner in=new Scanner(new InputStreamReader(conn.getInputStream()));
 
@@ -165,10 +176,29 @@ public class AggregatesRequest {
     }
 
     public static void main(String[] args) throws IOException, ParseException {
-        AggregatesRequest aggregates=new AggregatesRequest("AAPL");
-        aggregates.From("2022-02-26").To("2023-03-03").Timespan("day").endPoint().build();
-        AggregatesObject object=aggregates.build().get(0);
-        System.out.println(object.getVwap());
+        ArrayList<AggregatesObject> list=new AggregatesRequest("AAPL")
+                .From("2023-02-26")
+                .To("2023-03-03")
+                .Timespan("minute")
+                .endPoint()
+                .build();
+
+
+//        JSONArray sma_list=new SMA("AAPL")
+//                .Timestamp_gt("2023-02-26")
+//                .Timestamp_lte("2023-03-03")
+//                .Timespan("minute")
+//                .Window("5").EndPoint().fetchData();
+
+
+
+
+//        System.out.println("_-----------");
+//        System.out.println(list.size());
+//        System.out.println(sma_list.size());
+
+
+
 
 
     }

@@ -1,19 +1,19 @@
 package mycode.trade;
 
-import java.io.*;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import com.ib.client.*;
+import com.ib.client.EClientSocket;
 import mycode.help.Tools;
 import mycode.object.Option;
 import mycode.strategy_.*;
 import org.json.simple.parser.ParseException;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.stream.Collectors;
+
 
 public class Main {
-
-
 
 
 	public static void loadProgram(Program program) throws  IOException, ParseException, InterruptedException {
@@ -34,35 +34,33 @@ public class Main {
 
 		//////////////////////build strategy///////////////////////////////////////////
 		System.out.println("start to build strategy");
-		ArrayList<BearSpread> bearList=BuildStrategy.bearSpread(optionList,1000);
-		ArrayList<BullSpread> bullList=BuildStrategy.bullSpread(optionList,1000);
+		ArrayList<BearSpread> bearList=BuildStrategy.bearSpread(optionList,100);
+		ArrayList<BullSpread> bullList=BuildStrategy.bullSpread(optionList,100);
+		ArrayList<Reversal> reversal= (ArrayList<Reversal>) BuildStrategy.reversal(optionList);
 
 
 		System.out.println("start to loops over :"+bearList.size());
 		System.out.println("start to loops over :"+bullList.size());
-		strategys.addAll(bearList);
-		strategys.addAll(bullList);
+
+				strategys.addAll(reversal);
 
 		//	strategys.addAll(BuildStrategy.ironCondor(bullList,bearList));
 
-		strategys.addAll(BuildStrategy.shortBoxSpread2(bullList,bearList,1000));
+		//	strategys.addAll(BuildStrategy.shortBoxSpread2(bullList,bearList,100));
 		//strategys.addAll(BuildStrategy.shortBoxSpread2(bullList,bearList,1000));
 		//	strategys.addAll(BuildStrategy.shortBoxSpread(bullList,bearList,100));
 
-		//	strategys.addAll(BuildStrategy.shortBoxSpread2(bullList,bearList,100));
 
 		//	strategys_0dte.addAll(BuildStrategy.ironCondor(bullList_Odte,bearList_0dte));
 
 		//strategys.addAll(BuildStrategy.shortBoxSpread(bullList,bearList,100));
 		//	strategys.addAll(BuildStrategy.ironCondor(bullList,bearList));
-		//	strategys.addAll(BuildStrategy.longBoxSpread(bullList,bearList));
+		//	strategys.addAll(BuildStrategy.longBoxSpread2(bullList,bearList,100));
 		System.out.println("the strategys size : "+strategys.size());
-
 
 		//////////////////////////////////////////////////////////////////////////////
 
 		cancelTimer(client);
-
 
 		//	runLongBox(client,strategys,ordersManagement);
 		//		runShortBox(client,strategys,ordersManagement);
@@ -280,10 +278,25 @@ public class Main {
 		}
 	}
 	private synchronized static boolean isArbitrage(Strategy strategy){
-		if(strategy.maxLoss()>0){
-			if((strategy instanceof  LongBoxSpread) && ((LongBoxSpread) strategy).yearlyInterestRate()>30){
+		if(strategy.maxLoss()>0 && strategy instanceof  LongBoxSpread){
+			if( ((LongBoxSpread) strategy).yearlyInterestRate()>10){
+				return  true;
 			}
-			return true;
+			return false;
+		}
+		if(strategy instanceof  Reversal){
+			if(strategy.maxProfit()>50){
+				return true;
+			}
+			return false;
+		}
+		if(strategy instanceof  ShortBoxSpread){
+
+			if(strategy.maxLoss()>0
+			){
+				return  true;
+			}
+			return false;
 		}
 		return false;
 	}

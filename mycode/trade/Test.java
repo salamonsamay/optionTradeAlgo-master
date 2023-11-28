@@ -210,7 +210,7 @@ public class Test {
 //        Long t=timestamp;//17-4-23
 //        Long t2=timestamp2;
 //
-//        stock_request.From(t+"").To(t2+"").endPoint();
+//        stock_request.From(t+"").To(t2+"").EndPoint();
 //        ArrayList<StockObject> stockObject=stock_request.build();
 //
 //        double max=stockObject.get(0).getHighest_price();
