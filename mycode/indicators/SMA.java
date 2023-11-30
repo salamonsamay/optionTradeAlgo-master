@@ -1,17 +1,18 @@
 package mycode.indicators;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.HttpClients;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
+
 
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Scanner;
 
 public class SMA {
@@ -50,6 +51,9 @@ public class SMA {
         }
         if (!timestamp_lt.isEmpty()) {
             endPoint += "&timestamp.lt=" + timestamp_lt;
+        }
+        if(!expand_underlying.isEmpty()){
+            endPoint+="&expand_underlying="+expand_underlying;
         }
         if (!timestamp_lte.isEmpty()) {
             endPoint += "&timestamp.lte=" + timestamp_lte;
@@ -139,40 +143,34 @@ public class SMA {
 
 
 
-    public JSONArray fetchData() throws IOException, ParseException {
-        JSONArray jsonArray = fetchData(url+endPoint);
-
-        // Process each result in the jsonArray
-        for (Object item : jsonArray) {
-            JSONObject result = (JSONObject) item;
-        }
-
-        System.out.println(jsonArray.size());
-        return jsonArray;
+    public List<Double> fetchData() throws IOException {
+        String url = SMA.url+ endPoint;
+        return fetchData(url);
     }
 
-
-    private JSONArray fetchData(String url) throws IOException, ParseException {
-        JSONArray jsonArray = new JSONArray();
+    private List<Double> fetchData(String url) throws IOException {
+        List<Double> values = new ArrayList<>();
 
         while (url != null) {
-
             String result = getRequest(url);
 
-            JSONObject json = (JSONObject) new JSONParser().parse(result);
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode json = mapper.readTree(result);
 
-            if (((JSONObject)json.get("results"))!=null) {
-
-                jsonArray.addAll((Collection) ((JSONObject)json.get("results")).get("values"));
+            if (json.has("results")) {
+                JsonNode resultsNode = json.get("results");
+                for (JsonNode valueNode : resultsNode.get("underlying").get("aggregates")) {s
+                    values.add(valueNode.asDouble());
+                    System.out.println(valueNode);
+                }
             }
 
-
-
-            url = (String) json.get("next_url");
+            url = json.has("next_url") ? json.get("next_url").asText() : null;
         }
 
-        return jsonArray;
+        return values;
     }
+
 
 
 
@@ -203,10 +201,12 @@ public class SMA {
         }
     }
 
-    public static void main(String[] args) throws IOException, ParseException {
+    public static void main(String[] args) throws IOException {
         // Example usage
         SMA sma = new SMA("AAPL");
-        sma.Timestamp_gte("2023-11-01").Timespan("minute")
+        sma.Timestamp_gte("2023-11-01")
+                .Timespan("minute")
+                .ExpandUnderlying(true)
                 .Window("3").EndPoint().fetchData();
 
 
