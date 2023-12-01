@@ -108,7 +108,7 @@ public class Tools {
      * @throws FileNotFoundException If option data files are not found or an error occurs during data retrieval.
      */
     public static ArrayList<Option> getOptions(ArrayList<String> company_list) throws FileNotFoundException {
-        // Create a list to store SMA instances for each company.
+        // Create a list to store Indicator instances for each company.
         ArrayList<OptionChain> option_chain_list = new ArrayList<>();
 
         // Create a thread pool for concurrent data retrieval.
@@ -118,20 +118,20 @@ public class Tools {
         for (int i = 0; i < company_list.size(); i++) {
             // Check if the company has ex-dividend dates within the specified date range.
             if (!Tools.haveExDividend(company_list.get(i))) {
-                // Create an SMA instance for the current company.
+                // Create an Indicator instance for the current company.
                 OptionChain option_chain = new OptionChain(company_list.get(i));
 
-                // Configure the SMA with limit, expiration date range, and other options.
+                // Configure the Indicator with limit, expiration date range, and other options.
                 option_chain
                         .Limit("250")
                         .Expiriation_date_gt(Tools.DATE_START)
                         .Expiriation_date_lt(Tools.DATE_END)
                         .endPoint();
 
-                // Add the SMA to the list for concurrent processing.
+                // Add the Indicator to the list for concurrent processing.
                 option_chain_list.add(option_chain);
 
-                // Execute the SMA retrieval in a separate thread.
+                // Execute the Indicator retrieval in a separate thread.
                 pool.execute(option_chain);
             }
         }
@@ -149,7 +149,7 @@ public class Tools {
         // Create a list to store retrieved Option objects.
         ArrayList<Option> options_list = new ArrayList<>();
 
-        // Iterate through the SMA instances and retrieve their Option data.
+        // Iterate through the Indicator instances and retrieve their Option data.
         for (int i = 0; i < option_chain_list.size(); i++) {
             options_list.addAll(option_chain_list.get(i).option_list);
             option_chain_list.get(i).updateProcess();
@@ -157,7 +157,7 @@ public class Tools {
         }
 //        option_chain_list.stream()
 //                .peek(optionChain -> options_list.addAll(optionChain.option_list))
-//                .forEach(SMA::updateProcess);
+//                .forEach(Indicator::updateProcess);
 
         return options_list;
     }

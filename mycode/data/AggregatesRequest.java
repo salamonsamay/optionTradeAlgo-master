@@ -1,6 +1,5 @@
 package mycode.data;
 
-import mycode.indicators.SMA;
 import mycode.object.AggregatesObject;
 import mycode.object.Option;
 import org.json.simple.JSONArray;
@@ -8,13 +7,11 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
-import javax.swing.text.html.HTMLDocument;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 
@@ -184,7 +181,7 @@ public class AggregatesRequest {
                 .build();
 
 
-//        JSONArray sma_list=new SMA("AAPL")
+//        JSONArray sma_list=new Indicator("AAPL")
 //                .Timestamp_gt("2023-02-26")
 //                .Timestamp_lte("2023-03-03")
 //                .Timespan("minute")

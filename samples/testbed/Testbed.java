@@ -297,7 +297,7 @@ public class Testbed {
 		client.reqMktData(1011, ContractSamples.FLYbroadtapeNewsFeed(), "mdoff,292", false, false, null);
 		//! [reqmktdata_broadtapenews]
 		//! [reqoptiondatagenticks]
-        //Requesting data for an option contract will return the greek values
+        //Requesting data for an option contract will return the greek indicatorList
         client.reqMktData(1002, ContractSamples.OptionWithLocalSymbol(), "", false, false, null);
         //! [reqoptiondatagenticks]
 		//! [reqfuturesopeninterest]

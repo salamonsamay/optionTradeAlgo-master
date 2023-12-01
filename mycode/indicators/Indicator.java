@@ -11,14 +11,12 @@ import org.apache.http.impl.client.HttpClients;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 import java.util.Scanner;
 
-public class SMA  implements  Indicator{
+public class Indicator  {
     private static final String API_kEY="Yb44MaLyneZsziOqLRcrwPjtlgpfXaFG";
-    private static String url="https://api.polygon.io/v1/indicators/sma/";
+    private static String url="https://api.polygon.io/v1/indicators/";
+    private  String type="";
     private String endPoint="";
     private String stockTicker="";
     private String timespan="";
@@ -33,15 +31,16 @@ public class SMA  implements  Indicator{
     private String expand_underlying="";
     private String order="";
     private String limit="5000";//max is 5000
-    public ArrayNode smaList=new ObjectMapper().createArrayNode();
+    public ArrayNode indicatorList =new ObjectMapper().createArrayNode();
     public ArrayNode aggregatesList=new ObjectMapper().createArrayNode();
 
 
-    public SMA(String symbol){
+    public Indicator(String symbol,String type){
         this.stockTicker=symbol;
-
+        this.type=type;
+        url+=type+"/";
     }
-    public SMA EndPoint() {
+    public Indicator EndPoint() {
         if (!stockTicker.isEmpty()) {
             endPoint += stockTicker;
         }
@@ -86,79 +85,79 @@ public class SMA  implements  Indicator{
         return this;
     }
 
-    public SMA StockTicker(String stockTicker) {
+    public Indicator StockTicker(String stockTicker) {
         this.stockTicker = stockTicker;
         return this;
     }
 
-    public SMA Timespan(String timespan){
+    public Indicator Timespan(String timespan){
         this.timespan=timespan;
         return this;
     }
 
-     public  SMA Timestamp(String timestamp){
-         this.timestamp = timestamp;
-         return this;
-     }
+    public Indicator Timestamp(String timestamp){
+        this.timestamp = timestamp;
+        return this;
+    }
 
-    public SMA Timestamp_lt(String timespan_lt) {
+    public Indicator Timestamp_lt(String timespan_lt) {
         this.timestamp_lt = timespan_lt;
         return this;
     }
 
-    public SMA Timestamp_lte(String timestamp_lte) {
+    public Indicator Timestamp_lte(String timestamp_lte) {
         this.timestamp_lte = timestamp_lte;
         return this;
     }
 
-    public SMA Timestamp_gt(String timespan_gt) {
+    public Indicator Timestamp_gt(String timespan_gt) {
         this.timestamp_gt = timespan_gt;
         return this;
     }
 
-    public SMA Timestamp_gte(String timespan_gte) {
+    public Indicator Timestamp_gte(String timespan_gte) {
         this.timestamp_gte = timespan_gte;
         return this;
     }
 
-    public SMA Adjusted(boolean adjusted) {
+    public Indicator Adjusted(boolean adjusted) {
         this.adjusted = Boolean.toString(adjusted);
         return this;
     }
 
-    public SMA Window(String window) {
+    public Indicator Window(String window) {
         this.window = window;
         return this;
     }
 
-    public SMA SeriesType(String series_type) {
+    public Indicator SeriesType(String series_type) {
         this.series_type = series_type;
         return this;
     }
 
-    public SMA ExpandUnderlying(boolean expand_underlying) {
+    public Indicator ExpandUnderlying(boolean expand_underlying) {
         this.expand_underlying = Boolean.toString(expand_underlying);
         return this;
     }
 
-    public SMA Order(String order) {
+    public Indicator Order(String order) {
         this.order = order;
         return this;
     }
 
-    public SMA Limit(int limit) {
+    public Indicator Limit(int limit) {
         this.limit = Integer.toString(limit);
         return this;
     }
 
 
 
-    public SMA fetchData() throws IOException {
-        String url = SMA.url+ endPoint;
+    public Indicator fetchData() throws IOException {
+        String url = Indicator.url+ endPoint;
         return fetchData(url);
     }
 
-    private SMA fetchData(String url) throws IOException {
+    private Indicator fetchData(String url) throws IOException {
 
         while (url != null) {
             String result = getRequest(url);
@@ -171,10 +170,10 @@ public class SMA  implements  Indicator{
 
 
                 for (JsonNode valueNode : resultsNode.get("underlying").get("aggregates")) {
-                   aggregatesList.add(valueNode);
+                    aggregatesList.add(valueNode);
                 }
                 for(JsonNode valueNode : resultsNode.get("values")){
-                    smaList.add(valueNode);
+                    indicatorList.add(valueNode);
                 }
 
             }
@@ -212,13 +211,28 @@ public class SMA  implements  Indicator{
         }
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, InterruptedException {
         // Example usage
-        SMA sma = new SMA("AAPL");
-        sma.Timestamp_gte("2023-11-01")
-                .Timespan("minute")
+        Indicator indicator = new Indicator("AAPL","macd");
+        indicator.Timestamp_gte("2023-08-01")
+                .Timespan("hour")
+                .Window("1")
                 .ExpandUnderlying(true)
                 .EndPoint().fetchData();
+
+
+        for(int i = 0; i<indicator.indicatorList.size(); i++){
+
+            JsonNode agg=indicator.aggregatesList.get(i);
+            JsonNode value=indicator.indicatorList.get(i);
+            if(agg.get("t").equals(value.get("timestamp")))
+            {
+                if(agg.get("c").asDouble()*1.03<value.get("value").asDouble()){
+                    System.out.println("---- "+value);
+                }
+                System.out.println("---- "+value);
+            }
+        }
 
     }
 

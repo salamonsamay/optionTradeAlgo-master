@@ -70,7 +70,7 @@ public class MySQL {
 
     public  static void insertSMA(SMAObject smaObject){
 
-        String query="INSERT INTO SMA(ticker,Timespan,value_) VALUES(?,?,?)";
+        String query="INSERT INTO Indicator(ticker,Timespan,value_) VALUES(?,?,?)";
         PreparedStatement prepared = null;
         try {
             prepared = connect().prepareStatement(query);

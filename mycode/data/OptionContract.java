@@ -163,7 +163,7 @@ public class OptionContract extends Thread{
 
 			try {
 				Option option=snapShot(url);
-				if(option!=null ) {//if greeks values are existing
+				if(option!=null ) {//if greeks indicatorList are existing
 					optionArray.add(option);
 				}
 			}catch (NullPointerException e) {

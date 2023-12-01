@@ -631,7 +631,7 @@ class TicketDlg extends JDialog {
 		}
 	}
 	
-	/** This panel edits all ComboParam values except for Non-Guaranteed. 
+	/** This panel edits all ComboParam indicatorList except for Non-Guaranteed.
 	 *  That one goes on main panel because it applies to all combo orders. */
 	class ComboTicketPanel extends VerticalPanel {
 		final UpperField[] m_fields = new UpperField[ComboParam.values().length];

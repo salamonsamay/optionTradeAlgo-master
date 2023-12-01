@@ -11,7 +11,7 @@ public class LinearRegression {
 
     }
     public static void performLinearRegression(String data) {
-        // Extract date and close values
+        // Extract date and close indicatorList
         ArrayList<Double> dates = new ArrayList<Double>();
         ArrayList<Double> closes = new ArrayList<Double>();
         String[] lines = data.split("\\r?\\n");
