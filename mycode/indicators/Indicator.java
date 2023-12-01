@@ -2,6 +2,7 @@ package mycode.indicators;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -15,13 +16,13 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Scanner;
 
-public class SMA {
+public class SMA  implements  Indicator{
     private static final String API_kEY="Yb44MaLyneZsziOqLRcrwPjtlgpfXaFG";
     private static String url="https://api.polygon.io/v1/indicators/sma/";
     private String endPoint="";
     private String stockTicker="";
-
     private String timespan="";
+    private String timestamp="";
     private String timestamp_lt ="";
     private String timestamp_lte ="";
     private String timestamp_gt ="";
@@ -32,13 +33,14 @@ public class SMA {
     private String expand_underlying="";
     private String order="";
     private String limit="5000";//max is 5000
+    public ArrayNode smaList=new ObjectMapper().createArrayNode();
+    public ArrayNode aggregatesList=new ObjectMapper().createArrayNode();
 
 
     public SMA(String symbol){
         this.stockTicker=symbol;
 
     }
-
     public SMA EndPoint() {
         if (!stockTicker.isEmpty()) {
             endPoint += stockTicker;
@@ -48,6 +50,9 @@ public class SMA {
         }
         if (!timespan.isEmpty()) {
             endPoint += "&timespan=" + timespan;
+        }
+        if(!timestamp.isEmpty()){
+            endPoint+="&timestamp=" + timestamp;
         }
         if (!timestamp_lt.isEmpty()) {
             endPoint += "&timestamp.lt=" + timestamp_lt;
@@ -81,7 +86,7 @@ public class SMA {
         return this;
     }
 
-    public SMA stockTicker(String stockTicker) {
+    public SMA StockTicker(String stockTicker) {
         this.stockTicker = stockTicker;
         return this;
     }
@@ -90,6 +95,11 @@ public class SMA {
         this.timespan=timespan;
         return this;
     }
+
+     public  SMA Timestamp(String timestamp){
+         this.timestamp = timestamp;
+         return this;
+     }
 
     public SMA Timestamp_lt(String timespan_lt) {
         this.timestamp_lt = timespan_lt;
@@ -131,25 +141,24 @@ public class SMA {
         return this;
     }
 
-    public SMA order(String order) {
+    public SMA Order(String order) {
         this.order = order;
         return this;
     }
 
-    public SMA limit(int limit) {
+    public SMA Limit(int limit) {
         this.limit = Integer.toString(limit);
         return this;
     }
 
 
 
-    public List<Double> fetchData() throws IOException {
+    public SMA fetchData() throws IOException {
         String url = SMA.url+ endPoint;
         return fetchData(url);
     }
 
-    private List<Double> fetchData(String url) throws IOException {
-        List<Double> values = new ArrayList<>();
+    private SMA fetchData(String url) throws IOException {
 
         while (url != null) {
             String result = getRequest(url);
@@ -159,19 +168,21 @@ public class SMA {
 
             if (json.has("results")) {
                 JsonNode resultsNode = json.get("results");
-                for (JsonNode valueNode : resultsNode.get("underlying").get("aggregates")) {s
-                    values.add(valueNode.asDouble());
-                    System.out.println(valueNode);
-                }
-            }
 
+
+                for (JsonNode valueNode : resultsNode.get("underlying").get("aggregates")) {
+                   aggregatesList.add(valueNode);
+                }
+                for(JsonNode valueNode : resultsNode.get("values")){
+                    smaList.add(valueNode);
+                }
+
+            }
             url = json.has("next_url") ? json.get("next_url").asText() : null;
         }
 
-        return values;
+        return this;
     }
-
-
 
 
 
@@ -207,10 +218,10 @@ public class SMA {
         sma.Timestamp_gte("2023-11-01")
                 .Timespan("minute")
                 .ExpandUnderlying(true)
-                .Window("3").EndPoint().fetchData();
-
+                .EndPoint().fetchData();
 
     }
+
 
 
 
