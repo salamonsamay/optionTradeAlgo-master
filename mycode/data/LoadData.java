@@ -39,23 +39,31 @@ public class LoadData implements EWrapper {
         //   ArrayList<String > list=Init.read2();
 //
         LoadData loadData=new LoadData();
-        ArrayList<String> symbols=Tools.readCompanyFromFile();
-
-        // loadData.run2("SPY");
+//        ArrayList<String> symbols=Tools.readCompanyFromFile();
+        ArrayList<String> symbols=new  ArrayList<String>();
+        symbols.add("SPX");
+       // loadData.run2("SPX");
         loadData.run(symbols);
     }
 
-    public  void run(ArrayList<String> list) throws InterruptedException {
-        m_s.eConnect("127.0.0.1", 4002, 0);//ib getway demo
-        //    m_s.eConnect("127.0.0.1", 7497, 0);//tws demo ACCOUNT
-        //   m_s.eConnect("127.0.0.1", 7496, 0);//tws real ACCOUNT
-//        Thread.sleep(2000);
-//        m_s.reqGlobalCancel();
+    public void run(ArrayList<String> symbols) throws InterruptedException {
+        // Connect to Interactive Brokers Gateway
+        m_s.eConnect("127.0.0.1", 4002, 0);
+
+        // Uncomment the line below to connect to TWS Demo ACCOUNT or TWS Real ACCOUNT
+       //  m_s.eConnect("127.0.0.1", 7497, 0);
+
+        // Uncomment the line below to connect to TWS Real ACCOUNT
+        // m_s.eConnect("127.0.0.1", 7496, 0);
+
+        // Uncomment the lines below if you need to perform additional actions after connecting
+        // Thread.sleep(2000);
+        // m_s.reqGlobalCancel();
 
         final EReader reader = new EReader(m_s, m_signal);
-
         reader.start();
 
+        // Start a new thread to process messages from Interactive Brokers
         new Thread(() -> {
             while (m_s.isConnected()) {
                 m_signal.waitForSignal();
@@ -77,61 +85,71 @@ public class LoadData implements EWrapper {
             sleep(1000);
         }
 
-
-        for(int i=0;i<list.size();i++){
-            String symbol=list.get(i);
+        // Process each symbol in the list
+        for (String symbol : symbols) {
+            // Request contract details
             m_s.reqContractDetails(251, Transaction.createOptContract(symbol));
-            System.out.println("start :"+symbol);
+            System.out.println("Start: " + symbol);
 
-            while(!isEnd){
+            // Wait for the processing to finish
+            while (!isEnd) {
                 Thread.sleep(100);
             }
 
+            isEnd = false;
 
-            isEnd=false;
-            if(!isValid){
-                isValid=true;
-                System.out.println("continue");
+            // Continue to the next symbol if the current one is not valid
+            if (!isValid) {
+                isValid = true;
+                System.out.println("Continue");
                 continue;
             }
-//
-            System.out.println("-----");
-            File f=new File(Tools.PATH+symbol+".txt");
-            try {
-                System.out.println("start write "+symbol);
-                System.out.println();
-                Scanner in=new Scanner(f);
-                String old_info="";
-                boolean oldInfoExists=false;
-                while(in.hasNextLine()){
-                    old_info+=in.nextLine()+"\n";
-                    oldInfoExists=true;
-                }
-                in.close();
-                if(oldInfoExists){
-                    System.out.println("end write old info "+symbol);
-                }
-                PrintWriter pw=new PrintWriter(f);
-                String new_info=Tools.extract_and_write_contractID(symbol);
 
-                pw.print(old_info+new_info);
-                data="";
-                System.out.println("end convert "+symbol);
-                in.close();
-                pw.close();
+            System.out.println("-----");
+
+            // Handle file operations
+            File file = new File(Tools.PATH + symbol + ".txt");
+
+            try {
+                System.out.println("Start writing: " + symbol);
+                System.out.println();
+
+                // Read existing information from the file
+                Scanner scanner = new Scanner(file);
+                StringBuilder oldInfo = new StringBuilder();
+                boolean oldInfoExists = false;
+
+                while (scanner.hasNextLine()) {
+                    oldInfo.append(scanner.nextLine()).append("\n");
+                    oldInfoExists = true;
+                }
+
+                scanner.close();
+
+                if (oldInfoExists) {
+                    System.out.println("End writing old info: " + symbol);
+                }
+
+                // Write new information to the file
+                PrintWriter printWriter = new PrintWriter(file);
+                String newInfo = Tools.extract_and_write_contractID(symbol);
+                printWriter.print(oldInfo + newInfo);
+                data = "";
+                System.out.println("End converting: " + symbol);
+
+                printWriter.close();
             } catch (FileNotFoundException e) {
                 throw new RuntimeException(e);
             }
-
         }
 
+        // Disconnect from Interactive Brokers
         m_s.eDisconnect();
-
-
     }
 
+
     public void run2(String symbol){
-        //  m_s.eConnect("127.0.0.1", 4002, 0);//ib getway demo
+         // m_s.eConnect("127.0.0.1", 4002, 0);//ib getway demo
         m_s.eConnect("127.0.0.1", 7497, 0);//tws getway demo
 
         final EReader reader = new EReader(m_s, m_signal);
@@ -169,6 +187,20 @@ public class LoadData implements EWrapper {
         }
         System.out.println("----------------------------------------------------------------");
         System.out.println(data);
+
+    }
+
+
+    public  void clear() throws FileNotFoundException {
+        File file=new File(Tools.PATH);
+
+        for(int i=0;i<file.list().length;i++){
+            File file2= new File(Tools.PATH+file.list()[i]);
+
+            PrintWriter pw =new PrintWriter(file2);
+            pw.println();
+            pw.close();
+        }
 
     }
 

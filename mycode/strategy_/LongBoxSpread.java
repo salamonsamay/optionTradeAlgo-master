@@ -17,7 +17,7 @@ public class LongBoxSpread implements  Strategy{
     }
 
     public double maxProfit() {
-        double spread= bearSpread.buy.getOpt().getStrike()- bearSpread.sell.getOpt().getStrike();
+        double spread= bearSpread.buy.getOpt().getStrike() - bearSpread.sell.getOpt().getStrike();
         return (spread-(bearSpread.price()+ bullSpread.price()))*100 - LongBoxSpread.COMMISSION;
     }
 
@@ -89,8 +89,8 @@ public class LongBoxSpread implements  Strategy{
     }
 
     public String toString(){
-        String str="Box \n"
-                +"debit "+(Math.abs(bullSpread.price()+ bearSpread.price())+"\n"
+        String str="Long Box \n"
+                +"debit "+(Math.abs(bullSpread.price()+ bearSpread.price())*100+"\n"
                 +"day to expiration "+daysToExpiration()+"\n"
                 + "expiration date "+ bullSpread.sell.getOpt().getExpiration_date()+"\n"
                 +"undrline tiker call "+ bearSpread.sell.getOpt().getUnderlying_ticker()+"\n"

@@ -276,19 +276,19 @@ public class Indicator  {
         indicator.sortIndicatorByTimestamp();
         indicator.sortAggregatesByTimestamp();
         int n=Math.min(indicator.indicatorList.size(),indicator.aggregatesList.size());
-       for(int i=0;i<n-1;i++) {
-           JsonNode agg= indicator.aggregatesList.get(i);
-           JsonNode indi= indicator.indicatorList.get(i);
-           System.out.println(i);
-           System.out.println("______________________");
-           System.out.println(agg.get("t").asLong());
-           System.out.println(indi.get("timestamp").asLong());
-           System.out.println("_________________");
-           if(agg.get("t").asLong()!=indi.get("timestamp").asLong()){
-               throw new RuntimeException();
-           }
+        for(int i=0;i<n-1;i++) {
+            JsonNode agg= indicator.aggregatesList.get(i);
+            JsonNode indi= indicator.indicatorList.get(i);
+            System.out.println(i);
+            System.out.println("______________________");
+            System.out.println(agg.get("t").asLong());
+            System.out.println(indi.get("timestamp").asLong());
+            System.out.println("_________________");
+            if(agg.get("t").asLong()!=indi.get("timestamp").asLong()){
+                throw new RuntimeException();
+            }
 
-       }
+        }
 
 
 

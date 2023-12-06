@@ -38,8 +38,8 @@ public class Program implements EWrapper {
 
     public void run() throws InterruptedException {
         // m_s.eConnect("127.0.0.1", 4001, 0);//ib getway real
-     //    m_s.eConnect("127.0.0.1", 4002, 0);//ib getway demo
-           m_s.eConnect("127.0.0.1", 7497, 0);//tws demo ACCOUNT
+         m_s.eConnect("127.0.0.1", 4002, 0);//ib getway demo
+    //       m_s.eConnect("127.0.0.1", 7497, 0);//tws demo ACCOUNT
     //    m_s.eConnect("127.0.0.1", 7496, 0);//tws real ACCOUNT
 
 

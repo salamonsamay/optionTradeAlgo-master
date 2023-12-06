@@ -56,6 +56,8 @@ public class BoxSpreadTesting {
         assertEquals(50-commission,longBox.maxProfit(),delta);//(10-9.5)*100
         assertEquals(50-commission,longBox.maxLoss(),delta);//(10-9.5)*100
       //  assertEquals(1-10/9.5,longBox.getInterestRate(),delta);//(10-9.5)*100
+        System.out.println(longBox.maxProfit());
+
 
 
 //        assertEquals(((10/9.5)/longBox.bearSpread.daysToExpiration())*365,longBox.yearlyInterestRate(),delta);//(10-9.5)*100

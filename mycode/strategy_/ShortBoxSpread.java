@@ -76,7 +76,7 @@ public class ShortBoxSpread implements  Strategy{
     }
     public String toString(){
         String str="Box \n"
-                +"credit "+(100*Math.abs(bullSpread.price()+ bearSpread.price())+"\n"
+                +"credit "+(100*Math.abs(bullSpread.price()+ bearSpread.price())*100+"\n"
                 +"day to expiration "+daysToExpiration()+"\n"
                 + "expiration date "+ bullSpread.sell.getOpt().getExpiration_date()+"\n"
                 +"undrline tiker call "+ bearSpread.sell.getOpt().getUnderlying_ticker()+"\n"

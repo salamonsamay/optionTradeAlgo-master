@@ -36,18 +36,17 @@ public class Main {
 		System.out.println("start to build strategy");
 		ArrayList<BearSpread> bearList=BuildStrategy.bearSpread(optionList,100);
 		ArrayList<BullSpread> bullList=BuildStrategy.bullSpread(optionList,100);
-		ArrayList<Reversal> reversal= (ArrayList<Reversal>) BuildStrategy.reversal(optionList);
-
+	//	ArrayList<Reversal> reversal= (ArrayList<Reversal>) BuildStrategy.reversal(optionList);
 
 		System.out.println("start to loops over :"+bearList.size());
 		System.out.println("start to loops over :"+bullList.size());
 
-		strategys.addAll(reversal);
+		//strategys.addAll(reversal);
 
 		//	strategys.addAll(BuildStrategy.ironCondor(bullList,bearList));
 
-		//	strategys.addAll(BuildStrategy.shortBoxSpread2(bullList,bearList,100));
-		//strategys.addAll(BuildStrategy.shortBoxSpread2(bullList,bearList,1000));
+		strategys.addAll(BuildStrategy.longBoxSpread2(bullList,bearList,100));
+	//	strategys.addAll(BuildStrategy.shortBoxSpread2(bullList,bearList,1000));
 		//	strategys.addAll(BuildStrategy.shortBoxSpread(bullList,bearList,100));
 
 
@@ -76,7 +75,9 @@ public class Main {
 				int counter=0;
 				while(true) {
 					for(int i=0;i<strategys.size();i++) {
+
 						Strategy copy=strategys.get(i).deepCopy();
+						System.out.println(copy);
 						if( Tools.isValidData(copy) && isArbitrage(copy) ){
 							int next_order_id=Program.getNextOrderId();
 							client.placeOrder(next_order_id, Transaction.comboContract(copy),Transaction.createOrderBuy(copy.price()));
@@ -95,6 +96,7 @@ public class Main {
 								throw new RuntimeException(e);
 							}
 						}
+
 					}
 				}
 			}

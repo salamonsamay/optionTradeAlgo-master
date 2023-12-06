@@ -77,9 +77,9 @@ public class Tools {
         tickerMap.put("SPX", "416904");
     }
 
-    public static final String PATH ="read_file/liquid/";
-    public static  String  DATE_START = "2023-10-01";
-    public static  String  DATE_END = "2024-12-07";
+    public static final String PATH ="read_file/indices/";
+    public static  String  DATE_START = "2023-12-07";
+    public static  String  DATE_END = "2023-12-13";
 
 
     public static ArrayList<String> readCompanyFromFile(){
@@ -90,12 +90,14 @@ public class Tools {
         boolean flag=false;
 
         for(int i=0;i<symbols.length;i++){
+            String symbol = symbols[i].substring(0, symbols[i].indexOf('.'));
+//            if(symbol.equals("MRNA")){flag=true;}
+//            if(flag) {
 
-            String symbol=symbols[i].substring(0,symbols[i].indexOf('.'));
+                companyList.add(symbol);
+            }
 
-            companyList.add(symbol);
-
-        }
+//        }
         return companyList;
     }
 
@@ -409,6 +411,7 @@ public class Tools {
             try {
 
                 //    opt.setContractId(Tools.getContractId(opt.getUnderlying_ticker(),opt.getTicker()));
+
                 opt.setContractId(Tools.contract_id_list.get(opt.getTicker()));
 
 
@@ -568,6 +571,7 @@ public class Tools {
             } catch (FileNotFoundException e) {
                 throw new RuntimeException(e);
             }
+        ;
             while(in.hasNextLine()){
                 try {
 
