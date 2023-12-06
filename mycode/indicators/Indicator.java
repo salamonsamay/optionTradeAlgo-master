@@ -3,6 +3,7 @@ package mycode.indicators;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import mycode.object.AggregatesObject;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -11,7 +12,8 @@ import org.apache.http.impl.client.HttpClients;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.Scanner;
+import java.rmi.RemoteException;
+import java.util.*;
 
 public class Indicator  {
     private static final String API_kEY="Yb44MaLyneZsziOqLRcrwPjtlgpfXaFG";
@@ -33,6 +35,10 @@ public class Indicator  {
     private String limit="5000";//max is 5000
     public ArrayNode indicatorList =new ObjectMapper().createArrayNode();
     public ArrayNode aggregatesList=new ObjectMapper().createArrayNode();
+
+
+
+
 
 
     public Indicator(String symbol,String type){
@@ -211,28 +217,81 @@ public class Indicator  {
         }
     }
 
+    private void sortAggregatesByTimestamp() {
+        int n = aggregatesList.size();
+
+        for (int i = 0; i < n - 1; i++) {
+            for (int j = i + 1; j < n; j++) {
+                JsonNode now = aggregatesList.get(i);
+                JsonNode next = aggregatesList.get(j);
+
+                // Compare timestamps and swap if necessary
+                if (now.get("t").asLong() <= next.get("t").asLong()) {
+                    // Swap elements if they are in the wrong order
+                    aggregatesList.set(i, next);
+                    aggregatesList.set(j, now);
+
+                    // Update references to now and next after the swap
+                    now = aggregatesList.get(i);
+                    next = aggregatesList.get(j);
+                }
+            }
+        }
+    }
+    private void sortIndicatorByTimestamp() {
+        int n = indicatorList.size();
+
+        for (int i = 0; i < n - 1; i++) {
+            for (int j = i + 1; j < n; j++) {
+                JsonNode now = indicatorList.get(i);
+                JsonNode next = indicatorList.get(j);
+
+                // Compare timestamps and swap if necessary
+                if (now.get("timestamp").asLong() <= next.get("timestamp").asLong()) {
+                    // Swap elements if they are in the wrong order
+                    indicatorList.set(i, next);
+                    indicatorList.set(j, now);
+
+                    // Update references to now and next after the swap
+                    now = indicatorList.get(i);
+                    next = indicatorList.get(j);
+                }
+            }
+        }
+    }
+
+
     public static void main(String[] args) throws IOException, InterruptedException {
         // Example usage
-        Indicator indicator = new Indicator("AAPL","macd");
-        indicator.Timestamp_gte("2023-08-01")
-                .Timespan("hour")
-                .Window("1")
+        Indicator indicator = new Indicator("TSLA","sma");
+        indicator.Timestamp_gte("2010-08-01")
+                .Timespan("minute")
+                .Window("50")
                 .ExpandUnderlying(true)
                 .EndPoint().fetchData();
 
+        System.out.println(indicator.indicatorList.size());
+        System.out.println(indicator.aggregatesList.size());
 
-        for(int i = 0; i<indicator.indicatorList.size(); i++){
+        indicator.sortIndicatorByTimestamp();
+        indicator.sortAggregatesByTimestamp();
+        int n=Math.min(indicator.indicatorList.size(),indicator.aggregatesList.size());
+       for(int i=0;i<n-1;i++) {
+           JsonNode agg= indicator.aggregatesList.get(i);
+           JsonNode indi= indicator.indicatorList.get(i);
+           System.out.println(i);
+           System.out.println("______________________");
+           System.out.println(agg.get("t").asLong());
+           System.out.println(indi.get("timestamp").asLong());
+           System.out.println("_________________");
+           if(agg.get("t").asLong()!=indi.get("timestamp").asLong()){
+               throw new RuntimeException();
+           }
 
-            JsonNode agg=indicator.aggregatesList.get(i);
-            JsonNode value=indicator.indicatorList.get(i);
-            if(agg.get("t").equals(value.get("timestamp")))
-            {
-                if(agg.get("c").asDouble()*1.03<value.get("value").asDouble()){
-                    System.out.println("---- "+value);
-                }
-                System.out.println("---- "+value);
-            }
-        }
+       }
+
+
+
 
     }
 

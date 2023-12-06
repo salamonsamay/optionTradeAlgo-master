@@ -42,7 +42,7 @@ public class Main {
 		System.out.println("start to loops over :"+bearList.size());
 		System.out.println("start to loops over :"+bullList.size());
 
-				strategys.addAll(reversal);
+		strategys.addAll(reversal);
 
 		//	strategys.addAll(BuildStrategy.ironCondor(bullList,bearList));
 
