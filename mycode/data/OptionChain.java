@@ -1,4 +1,7 @@
 package mycode.data;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -141,14 +144,12 @@ public class OptionChain extends  Thread{
     }
 
     public ArrayList<Option> build() throws IOException, ParseException {
+
         JSONArray array;
 
-        if (limit.equals("250")) {
-            array = requestWithNextUrl(url + endPoint); // Get the max
-        } else {
-            Object obj = new JSONParser().parse(getRequest(url + endPoint));
-            array = (JSONArray) ((JSONObject) obj).get("results");
-        }
+
+        array = requestWithNextUrl(url + endPoint); // Get the max
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
         ArrayList<Option> optionArray = new ArrayList<>();
 
@@ -187,16 +188,29 @@ public class OptionChain extends  Thread{
 
     public JSONArray requestWithNextUrl(String url) throws IOException, ParseException {
         JSONArray jsonArray = new JSONArray();
-
+        ObjectMapper mapper=new ObjectMapper();
+        ArrayNode arrayNode=mapper.createArrayNode();
         while (url != null) {
             String result = getRequest(url);
-            JSONObject json = (JSONObject) new JSONParser().parse(result);
+            JsonNode nodes= mapper.readTree(result);
 
-            if (json.containsKey("results")) {
-                jsonArray.addAll((JSONArray) json.get("results"));
+            if (nodes.has("results")) {
+                arrayNode.add(nodes);
+
             }
+           if(nodes.has("next_url")){
+               url =  nodes.get("next_url").asText();
+           }else url=null;
 
-            url = (String) json.get("next_url");
+        }
+        System.out.println("array size is "+arrayNode.size());
+        for(JsonNode node:arrayNode)  {
+
+            for(JsonNode v:node.get("results")){
+                System.out.println(v);
+            }
+            System.out.println();
+
         }
 
         return jsonArray;
@@ -217,6 +231,9 @@ public class OptionChain extends  Thread{
             return scanner.useDelimiter("\\A").next();
         }
     }
+
+
+
 
     public void updateProcess()  {
         new Thread(new Runnable() {
@@ -244,7 +261,6 @@ public class OptionChain extends  Thread{
     }
 
     public static void main(String[] args) throws IOException, ParseException {
-
 
     }
 
