@@ -2,6 +2,7 @@ package mycode.object;
 
 import javax.swing.plaf.synth.SynthOptionPaneUI;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.json.simple.JSONObject;
 
 public class Greeks {
@@ -44,16 +45,16 @@ public class Greeks {
 
 	}
 
-	public  Greeks(JSONObject json) throws NullPointerException{
-		JSONObject greeks= (JSONObject) json.get("greeks");
+	public  Greeks(JsonNode json) throws NullPointerException{
+		JsonNode greeks= json.get("greeks");
 		if(greeks.isEmpty()){
 			throw new NullPointerException();
 		}
 
-		String delta=(greeks.get("delta")+"");
-		String gamma= (greeks.get("gamma")+"");
-		String theta= (greeks.get("theta")+"");
-		String vega= (greeks.get("vega")+"");
+		String delta=(greeks.get("delta").asText());
+		String gamma= (greeks.get("gamma").asText());
+		String theta= (greeks.get("theta").asText());
+		String vega= (greeks.get("vega").asText());
 
 		if(Double.parseDouble(delta)<0) {//if it put option
 			setDelta(Double.parseDouble(delta)*-1);

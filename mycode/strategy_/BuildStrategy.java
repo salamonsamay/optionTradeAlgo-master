@@ -35,6 +35,7 @@ public class BuildStrategy {
 				// Perform the comparison logic between 'bullSpreads' and 'bearSpreads'
 
 				for (BullSpread bullSpread : bullSpreads) {
+					if(!bullSpread.getCompanySymbol().equals("SPX")){continue;}
 					for (BearSpread bearSpread : bearSpreads) {
 
 						if (Math.abs(bearSpread.buy.getOpt().getStrike() - bearSpread.sell.getOpt().getStrike()) <= spread_diff) {

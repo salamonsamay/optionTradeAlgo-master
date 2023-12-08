@@ -145,26 +145,29 @@ public class OptionChain extends  Thread{
 
     public ArrayList<Option> build() throws IOException, ParseException {
 
-        JSONArray array;
+        ArrayNode array;
 
 
         array = requestWithNextUrl(url + endPoint); // Get the max
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
         ArrayList<Option> optionArray = new ArrayList<>();
 
-        for (Object item : array) {
-            JSONObject json = (JSONObject) item;
-            String contractType = null;
-            Option option;
-            try{
-                contractType = (String) ((JSONObject) json.get("details")).get("contract_type");
-                option = contractType.equals("call") ? new OptionCall() : new OptionPut();
-                option.update(json);
-                optionArray.add(option);
-            }catch (NullPointerException e) {
-                e.printStackTrace();
+        for (JsonNode nodes : array) {
+            for(JsonNode json:nodes.get("results")){
+                String contractType = null;
+                Option option;
+                try{
+                    contractType = json.get("details").get("contract_type").asText();
+                    option = contractType.equals("call") ? new OptionCall() : new OptionPut();
+                    option.update(json);
+                    optionArray.add(option);
+                }catch (NullPointerException e) {
+                    e.printStackTrace();
+                }
+
             }
+
+
 
         }
 
@@ -186,8 +189,8 @@ public class OptionChain extends  Thread{
 
 
 
-    public JSONArray requestWithNextUrl(String url) throws IOException, ParseException {
-        JSONArray jsonArray = new JSONArray();
+    public ArrayNode requestWithNextUrl(String url) throws IOException, ParseException {
+
         ObjectMapper mapper=new ObjectMapper();
         ArrayNode arrayNode=mapper.createArrayNode();
         while (url != null) {
@@ -198,22 +201,22 @@ public class OptionChain extends  Thread{
                 arrayNode.add(nodes);
 
             }
-           if(nodes.has("next_url")){
-               url =  nodes.get("next_url").asText();
-           }else url=null;
+            if(nodes.has("next_url")){
+                url =  nodes.get("next_url").asText();
+            }else url=null;
 
         }
-        System.out.println("array size is "+arrayNode.size());
-        for(JsonNode node:arrayNode)  {
+//        System.out.println("array size is "+arrayNode.size());
+//        for(JsonNode node:arrayNode)  {
+//
+//            for(JsonNode v:node.get("results")){
+//                System.out.println(v);
+//            }
+//            System.out.println();
+//
+//        }
 
-            for(JsonNode v:node.get("results")){
-                System.out.println(v);
-            }
-            System.out.println();
-
-        }
-
-        return jsonArray;
+        return arrayNode;
     }
 
     public String getRequest(String url) throws IOException,RuntimeException{

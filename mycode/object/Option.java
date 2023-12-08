@@ -1,5 +1,6 @@
 package mycode.object;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.json.simple.JSONObject;
 
 public interface Option {
@@ -42,9 +43,9 @@ public interface Option {
 	double getUnderlying_price();
 	String type();
 
-	void update(JSONObject jsonObject);
+	void update(JsonNode jsonObject);
 	void update(Option opt);
-	boolean update();
+
 
 	int getContractId();
 

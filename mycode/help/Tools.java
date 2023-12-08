@@ -77,9 +77,9 @@ public class Tools {
         tickerMap.put("SPX", "416904");
     }
 
-    public static final String PATH ="read_file/indices/";
+    public static final String PATH ="read_file/liquid/";
     public static  String  DATE_START = "2023-12-07";
-    public static  String  DATE_END = "2023-12-13";
+    public static  String  DATE_END = "2024-05-20";
 
 
     public static ArrayList<String> readCompanyFromFile(){
@@ -94,8 +94,8 @@ public class Tools {
 //            if(symbol.equals("MRNA")){flag=true;}
 //            if(flag) {
 
-                companyList.add(symbol);
-            }
+            companyList.add(symbol);
+        }
 
 //        }
         return companyList;
@@ -124,17 +124,26 @@ public class Tools {
                 OptionChain option_chain = new OptionChain(company_list.get(i));
 
                 // Configure the Indicator with limit, expiration date range, and other options.
-                option_chain
-                        .Limit("250")
-                        .Expiriation_date_gt(Tools.DATE_START)
-                        .Expiriation_date_lt(Tools.DATE_END)
-                        .endPoint();
 
-                // Add the Indicator to the list for concurrent processing.
-                option_chain_list.add(option_chain);
+                    option_chain
+                            .Limit("250")
+                            .Expiriation_date_gt(Tools.DATE_START)
+                            .Expiriation_date_lt(Tools.DATE_END);
+                    if(company_list.get(i).equals("SPX")){
+                        option_chain.Expiriation_date_lt("2024-05-13");
+                    }
+                   option_chain.endPoint();
 
-                // Execute the Indicator retrieval in a separate thread.
+
+                    // Add the Indicator to the list for concurrent processing.
+                    option_chain_list.add(option_chain);
+
+                    // Execute the Indicator retrieval in a separate thread.
+
+
+
                 pool.execute(option_chain);
+
             }
         }
 
@@ -453,56 +462,8 @@ public class Tools {
         return filter;
     }
 
-    public static void updateAll(ArrayList<Option> list) {
 
-        for(Option l:list) {
-            new Thread(new Runnable() {
 
-                public void run() {
-                    //long t=new Date().getTime();
-                    while(true) {
-                        l.update();
-//						long t2=new Date().getTime();
-//						System.out.println((t2-t)/1000);
-//						t=t2;
-                        //		System.out.println((new Date().getTime()-l.getLastUpdate())/1000);
-                        try {
-                            Thread.sleep(20);
-//						System.out.println("updateProccess "+l.getTicker());
-                        } catch (InterruptedException e) {
-                            // TODO Auto-generated catch block
-                            //	reqHistoricalData_.printStackTrace();
-                            System.out.println(e);
-                        }
-                    }
-
-                }
-            }).start();
-        }
-    }
-
-    public static void updateRSI(ArrayList<Option> list ){
-        for(Option l:list) {
-            new Thread(new Runnable() {
-
-                public void run() {
-                    //long t=new Date().getTime();
-                    while(true) {
-                        l.update();
-                        try {
-                            Thread.sleep(1000);
-//						System.out.println("updateProccess "+l.getTicker());
-                        } catch (InterruptedException e) {
-                            // TODO Auto-generated catch block
-                            //	reqHistoricalData_.printStackTrace();
-                            System.out.println(e);
-                        }
-                    }
-
-                }
-            }).start();
-        }
-    }
 
     /**
      * get the data from IBKR and extract the contract id and ticker information
@@ -571,7 +532,7 @@ public class Tools {
             } catch (FileNotFoundException e) {
                 throw new RuntimeException(e);
             }
-        ;
+            ;
             while(in.hasNextLine()){
                 try {
 

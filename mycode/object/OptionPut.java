@@ -4,8 +4,7 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 
-import mycode.data.OptionContract;
-import org.json.simple.JSONObject;
+import com.fasterxml.jackson.databind.JsonNode;
 
 
 public class OptionPut implements Option {
@@ -206,32 +205,31 @@ public class OptionPut implements Option {
 				'}';
 	}
 
-	public void update(JSONObject json) {
-		JSONObject details = (JSONObject) json.get("details");
-		JSONObject last_quote = (JSONObject) json.get("last_quote");
-		JSONObject underlying_asset = (JSONObject) json.get("underlying_asset");
-		JSONObject day = (JSONObject) json.get("day");
+	public void update(JsonNode json) {
+		JsonNode details =json.get("details");
+		JsonNode last_quote = json.get("last_quote");
+		JsonNode underlying_asset =  json.get("underlying_asset");
+		JsonNode day = json.get("day");
 
-		setTicker(details.get("ticker").toString());
-		setStrike(Double.parseDouble(details.get("strike_price") + ""));
-		setAsk(Double.parseDouble(last_quote.get("ask") + ""));
-		setBid(Double.parseDouble((last_quote.get("bid") + "")));
-		setMid_point(Double.parseDouble((last_quote.get("midpoint") + "")));
-		setExercise_style(details.get("exercise_style") + "");
-		setExpiration_date(details.get("expiration_date") + "");
+		setTicker(details.get("ticker").asText());
+		setStrike(details.get("strike_price").asDouble());
+		setAsk(last_quote.get("ask").asDouble());
+		setBid(last_quote.get("bid").asDouble());
+		setMid_point(last_quote.get("midpoint").asDouble());
+		setExercise_style(details.get("exercise_style").asText());
+		setExpiration_date(details.get("expiration_date").asText());
 		setLastUpdate(Long.parseLong((last_quote.get("last_updated") + "").substring(0, 13)));
 
 		if (!day.isEmpty()) {
-			setVwap(Double.parseDouble(day.get("vwap") + ""));
-			setVolume(Double.parseDouble(day.get("volume") + ""));
+			setVwap(day.get("vwap").asDouble());
+			setVolume(day.get("volume").asDouble());
 		}
-
 		try {
 			if (getExercise_style().equals("european")) {
-				setUnderlying_ticker((underlying_asset.get("ticker")+"").substring(2));
+				setUnderlying_ticker((underlying_asset.get("ticker").asText()).substring(2));
 				setGreeks(new Greeks(0, 0, 0, 0));
 			} else {
-				setUnderlying_ticker((underlying_asset.get("ticker")+""));
+				setUnderlying_ticker((underlying_asset.get("ticker").asText()));
 				setUnderlying_price(Double.parseDouble(underlying_asset.get("price") + ""));
 				setGreeks(new Greeks(json));
 			}
@@ -239,6 +237,7 @@ public class OptionPut implements Option {
 			// Handle any exceptions or continue as needed
 		}
 	}
+
 
 	public  void update(Option opt) {
 		if (opt instanceof OptionCall) throw new RuntimeException();
@@ -258,33 +257,7 @@ public class OptionPut implements Option {
 		setLastUpdate(opt.getLastUpdate());
 
 	}
-	public  boolean update() {
-		//if the last time was updateProccess less than 1 minute
-		if((new Date()).getTime()- getLastUpdate()<1000) {return true;}
 
-		String url="https://api.polygon.io/v3/snapshot/options/"+getUnderlying_ticker()+"/"+getTicker()+"?apiKey=Yb44MaLyneZsziOqLRcrwPjtlgpfXaFG";
-		OptionContract opt_=new OptionContract(getUnderlying_ticker());
-		Option opt=null;
-		try {
-			opt = opt_.snapShot(url);
-			setUnderlying_ticker(opt.getUnderlying_ticker());
-			setUnderlying_price(opt.getUnderlying_price());
-			setTicker(opt.getTicker());
-			setStrike(opt.getStrike());
-			setAsk(opt.getAsk());
-			setBid(opt.getBid());
-			setMid_point(opt.getMid_point());
-			setGreeks(opt.getGreeks());
-			setExpiration_date(opt.getExpiration_date());
-			setVwap(opt.getVwap());
-			setLastUpdate((new Date()).getTime());
-		} catch (Exception e) {
-//			reqHistoricalData_.printStackTrace();
-			return false;
-		}
-
-		return true;
-	}
 
 
 

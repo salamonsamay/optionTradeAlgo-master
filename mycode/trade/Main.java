@@ -46,7 +46,7 @@ public class Main {
 		//	strategys.addAll(BuildStrategy.ironCondor(bullList,bearList));
 
 		strategys.addAll(BuildStrategy.longBoxSpread2(bullList,bearList,100));
-	//	strategys.addAll(BuildStrategy.shortBoxSpread2(bullList,bearList,1000));
+		strategys.addAll(BuildStrategy.shortBoxSpread2(bullList,bearList,1000));
 		//	strategys.addAll(BuildStrategy.shortBoxSpread(bullList,bearList,100));
 
 
@@ -77,7 +77,6 @@ public class Main {
 					for(int i=0;i<strategys.size();i++) {
 
 						Strategy copy=strategys.get(i).deepCopy();
-						System.out.println(copy);
 						if( Tools.isValidData(copy) && isArbitrage(copy) ){
 							int next_order_id=Program.getNextOrderId();
 							client.placeOrder(next_order_id, Transaction.comboContract(copy),Transaction.createOrderBuy(copy.price()));
@@ -85,7 +84,7 @@ public class Main {
 							System.out.println("send order for "+copy);
 
 
-							if(counter>100){
+							if(counter++>100){
 								client.reqGlobalCancel();
 								Tools.sendedOrder.clear();
 								counter=0;
