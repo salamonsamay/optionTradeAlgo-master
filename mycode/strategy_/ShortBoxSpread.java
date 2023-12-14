@@ -75,8 +75,8 @@ public class ShortBoxSpread implements  Strategy{
         return false;
     }
     public String toString(){
-        String str="Box \n"
-                +"credit "+(100*Math.abs(bullSpread.price()+ bearSpread.price())*100+"\n"
+        String str="ShortBox \n"
+                +"credit "+(100*Math.abs(bullSpread.price()+ bearSpread.price())+"\n"
                 +"day to expiration "+daysToExpiration()+"\n"
                 + "expiration date "+ bullSpread.sell.getOpt().getExpiration_date()+"\n"
                 +"undrline tiker call "+ bearSpread.sell.getOpt().getUnderlying_ticker()+"\n"
@@ -94,12 +94,13 @@ public class ShortBoxSpread implements  Strategy{
 
         return 0;
     }
-    public  double getInterestRate(){
-        //if the result is positive it means that im get money
-        double originalLoan=price()*-1;
-        double returnLoan=Math.abs(bullSpread.buy.getOpt().getStrike()-bullSpread.sell.getOpt().getStrike());
+    public double getInterestRate() {
+        double originalLoan = ((price()) * -1)-COMMISSION/100; // Assuming price() returns the original loan amount (negative because it's a loan)
+        double returnLoan = Math.abs(bullSpread.sell.getOpt().getStrike() - bullSpread.buy.getOpt().getStrike());
 
-        return  ((originalLoan-returnLoan)/originalLoan)*100;
+        // Calculate interest rate
+        double interestRate = ((returnLoan - originalLoan) / originalLoan) * 100;
+        return interestRate;
     }
     public  double yearlyInterestRate(){
         //if the result is positive it means that im get money

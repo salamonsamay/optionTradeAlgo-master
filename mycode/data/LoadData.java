@@ -39,9 +39,13 @@ public class LoadData implements EWrapper {
         //   ArrayList<String > list=Init.read2();
 //
         LoadData loadData=new LoadData();
-//        ArrayList<String> symbols=Tools.readCompanyFromFile();
+        //       ArrayList<String> symbols=Tools.readCompanyFromFile();
         ArrayList<String> symbols=new  ArrayList<String>();
         symbols.add("SPX");
+//        symbols.add("SPY");
+//        symbols.add("QQQ");
+
+
        // loadData.run2("SPX");
         loadData.run(symbols);
     }
@@ -93,7 +97,7 @@ public class LoadData implements EWrapper {
 
             // Wait for the processing to finish
             while (!isEnd) {
-                Thread.sleep(100);
+                Thread.sleep(500);
             }
 
             isEnd = false;

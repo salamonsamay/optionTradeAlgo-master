@@ -167,8 +167,6 @@ public class OptionChain extends  Thread{
 
             }
 
-
-
         }
 
         if (this.option_list.isEmpty()) {
@@ -236,8 +234,6 @@ public class OptionChain extends  Thread{
     }
 
 
-
-
     public void updateProcess()  {
         new Thread(new Runnable() {
             public void run() {
@@ -250,7 +246,7 @@ public class OptionChain extends  Thread{
                         failed_counter++;
                     }
                     try {
-                        int r=(int)(Math.random()*5)+1;
+                        int r=(int)(Math.random()*3)+1;
                         Thread.sleep(5000*r);
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);

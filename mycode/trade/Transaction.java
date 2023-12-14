@@ -147,11 +147,12 @@ public class Transaction {
 
         return  contract;
     }
+
     public static Contract createOptContract(String symbol){
         Contract contract =new Contract();
         contract.symbol(symbol);
         //  contract.conid(609954644);
-        contract.lastTradeDateOrContractMonth("202405");
+        contract.lastTradeDateOrContractMonth("202912");
         contract.secType("OPT");
         contract.exchange("SMART");
         contract.currency("USD");

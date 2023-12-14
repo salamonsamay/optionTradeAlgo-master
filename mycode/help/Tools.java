@@ -78,8 +78,8 @@ public class Tools {
     }
 
     public static final String PATH ="read_file/liquid/";
-    public static  String  DATE_START = "2023-12-07";
-    public static  String  DATE_END = "2024-05-20";
+    public static  String  DATE_START = "2024-11-12";
+    public static  String  DATE_END = "2024-12-30";
 
 
     public static ArrayList<String> readCompanyFromFile(){
@@ -87,17 +87,15 @@ public class Tools {
         File file =new File(PATH);
 
         String symbols[]=file.list();
-        boolean flag=false;
 
         for(int i=0;i<symbols.length;i++){
             String symbol = symbols[i].substring(0, symbols[i].indexOf('.'));
-//            if(symbol.equals("MRNA")){flag=true;}
-//            if(flag) {
+            if(symbol.equals("SPX")) {
 
-            companyList.add(symbol);
+                companyList.add(symbol);
+            }
+
         }
-
-//        }
         return companyList;
     }
 
@@ -125,20 +123,20 @@ public class Tools {
 
                 // Configure the Indicator with limit, expiration date range, and other options.
 
-                    option_chain
-                            .Limit("250")
-                            .Expiriation_date_gt(Tools.DATE_START)
-                            .Expiriation_date_lt(Tools.DATE_END);
-                    if(company_list.get(i).equals("SPX")){
-                        option_chain.Expiriation_date_lt("2024-05-13");
-                    }
-                   option_chain.endPoint();
+                option_chain
+                        .Limit("250")
+                        .Expiriation_date_gt(Tools.DATE_START)
+                        .Expiriation_date_lt(Tools.DATE_END);
+                if(company_list.get(i).equals("SPX")){
+                    option_chain.Expiriation_date_lt("2029-12-30");
+                }
+                option_chain.endPoint();
 
 
-                    // Add the Indicator to the list for concurrent processing.
-                    option_chain_list.add(option_chain);
+                // Add the Indicator to the list for concurrent processing.
+                option_chain_list.add(option_chain);
 
-                    // Execute the Indicator retrieval in a separate thread.
+                // Execute the Indicator retrieval in a separate thread.
 
 
 
@@ -224,6 +222,7 @@ public class Tools {
                     && isValidData(((IronCondor) strategy).bull_put);
         }
         if(strategy instanceof  ShortBoxSpread ){
+            if(strategy.price()>=0){return false;}
             return  isValidData(((ShortBoxSpread) strategy).bearSpread)
                     && isValidData(((ShortBoxSpread) strategy).bullSpread);
         }

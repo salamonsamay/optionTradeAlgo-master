@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.stream.Collectors;
 
 
@@ -21,7 +22,6 @@ public class Main {
 		EClientSocket client=program.m_s;
 		OrdersManagement ordersManagement=program.ordersManagement;
 		ArrayList<String> companyList=Tools.readCompanyFromFile();
-		ArrayList<Strategy> strategys=new ArrayList<>();
 		ArrayList<Option> optionList=Tools.getOptions(companyList);
 //		System.out.println("updateProccess linear");
 //		Tools.updateLinearList();
@@ -34,9 +34,18 @@ public class Main {
 
 		//////////////////////build strategy///////////////////////////////////////////
 		System.out.println("start to build strategy");
-		ArrayList<BearSpread> bearList=BuildStrategy.bearSpread(optionList,100);
-		ArrayList<BullSpread> bullList=BuildStrategy.bullSpread(optionList,100);
-	//	ArrayList<Reversal> reversal= (ArrayList<Reversal>) BuildStrategy.reversal(optionList);
+		ArrayList<BearSpread> bearList=BuildStrategy.bearSpread(optionList,5000);
+		ArrayList<BullSpread> bullList=BuildStrategy.bullSpread(optionList,5000);
+	//	ArrayList<PutCallParity> putCallParityArrayList=BuildStrategy.putCallParities(optionList);
+	//	runPutCallParity(client,putCallParityArrayList);
+
+//		for(PutCallParity value:putCallParityArrayList){
+//			System.out.println(value.checkPutCallParity());
+//			System.out.println(value);
+//
+//
+//		}
+		//	ArrayList<Reversal> reversal= (ArrayList<Reversal>) BuildStrategy.reversal(optionList);
 
 		System.out.println("start to loops over :"+bearList.size());
 		System.out.println("start to loops over :"+bullList.size());
@@ -45,12 +54,14 @@ public class Main {
 
 		//	strategys.addAll(BuildStrategy.ironCondor(bullList,bearList));
 
+		ArrayList<Strategy> strategys=new ArrayList<>();
 		strategys.addAll(BuildStrategy.longBoxSpread2(bullList,bearList,100));
-		strategys.addAll(BuildStrategy.shortBoxSpread2(bullList,bearList,1000));
+		strategys.addAll(BuildStrategy.shortBoxSpread2(bullList,bearList,5000));
+
 		//	strategys.addAll(BuildStrategy.shortBoxSpread(bullList,bearList,100));
 
 
-		//	strategys_0dte.addAll(BuildStrategy.ironCondor(bullList_Odte,bearList_0dte));
+			strategys.addAll(BuildStrategy.ironCondor2(bullList,bearList,1000));
 
 		//strategys.addAll(BuildStrategy.shortBoxSpread(bullList,bearList,100));
 		//	strategys.addAll(BuildStrategy.ironCondor(bullList,bearList));
@@ -74,31 +85,30 @@ public class Main {
 				System.out.println("start arbitrage algo...");
 				int counter=0;
 				while(true) {
-					for(int i=0;i<strategys.size();i++) {
+					int random=(int)(Math.random()*strategys.size());
+					Strategy copy=strategys.get(random).deepCopy();
+					if( Tools.isValidData(copy) && isArbitrage(copy) ){
+						int next_order_id=Program.getNextOrderId();
+						client.placeOrder(next_order_id, Transaction.comboContract(copy),Transaction.createOrderBuy(copy.price()));
+						Tools.sendedOrder.put(next_order_id,copy.toString());
+						System.out.println("send order for "+copy);
 
-						Strategy copy=strategys.get(i).deepCopy();
-						if( Tools.isValidData(copy) && isArbitrage(copy) ){
-							int next_order_id=Program.getNextOrderId();
-							client.placeOrder(next_order_id, Transaction.comboContract(copy),Transaction.createOrderBuy(copy.price()));
-							Tools.sendedOrder.put(next_order_id,copy.toString());
-							System.out.println("send order for "+copy);
 
-
-							if(counter++>100){
-								client.reqGlobalCancel();
-								Tools.sendedOrder.clear();
-								counter=0;
-							}
-							try {
-								Thread.sleep(3000);
-							} catch (InterruptedException e) {
-								throw new RuntimeException(e);
-							}
+						if(counter++>500){
+							client.reqGlobalCancel();
+							Tools.sendedOrder.clear();
+							counter=0;
 						}
-
+						try {
+							Thread.sleep(3000);
+						} catch (InterruptedException e) {
+							throw new RuntimeException(e);
+						}
 					}
+
 				}
 			}
+
 		});
 		t.start();
 
@@ -106,6 +116,28 @@ public class Main {
 
 	}
 
+    public  static void runPutCallParity(EClientSocket client, ArrayList<PutCallParity> list){
+		Thread t=new Thread(()->{
+			while (true){
+					Collections.sort(list);
+
+				try {
+					System.out.println("_______________________________");
+					System.out.println(list.get(0).checkPutCallParity());
+					System.out.println(list.get(0));
+					System.out.println(list.get(list.size()-1).checkPutCallParity());
+					System.out.println(list.get(list.size()-1));
+					System.out.println("_______________________________");
+					Thread.sleep(60*1000*5);
+				} catch (InterruptedException e) {
+					throw new RuntimeException(e);
+				}
+			}
+
+
+		});
+		t.start();
+	}
 	public static void runAtomicStrategy(EClientSocket client , ArrayList<Strategy> strategys,OrdersManagement ordersManagement){
 		System.out.println("start normal algo...");
 
@@ -280,7 +312,7 @@ public class Main {
 	}
 	private synchronized static boolean isArbitrage(Strategy strategy){
 		if(strategy.maxLoss()>0 && strategy instanceof  LongBoxSpread){
-			if( ((LongBoxSpread) strategy).yearlyInterestRate()>10){
+			if( ((LongBoxSpread) strategy).yearlyInterestRate()>20){
 				return  true;
 			}
 			return false;
@@ -293,11 +325,16 @@ public class Main {
 		}
 		if(strategy instanceof  ShortBoxSpread){
 
-			if(strategy.maxLoss()>0
+			if(((ShortBoxSpread) strategy).yearlyInterestRate()<2
 			){
 				return  true;
 			}
 			return false;
+		}
+		if(strategy instanceof  IronCondor){
+			if(strategy.maxLoss()>0 && strategy.price()*100<-10000){
+				return  true;
+			}
 		}
 		return false;
 	}

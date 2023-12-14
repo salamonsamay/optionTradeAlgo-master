@@ -3,7 +3,6 @@ package mycode.strategy_;
 import mycode.help.Tools;
 import mycode.object.*;
 
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -13,6 +12,18 @@ import java.util.stream.Collectors;
 public class BuildStrategy {
 
 
+
+	public static ArrayList<PutCallParity> putCallParities(List<Option> list){
+		List<PutCallParity> putCallParityList=new ArrayList<>();
+		for(int i=0;i<list.size();i++){
+			for(int j=0;j<list.size();j++){
+				if(PutCallParity.inputIsCorrect(list.get(i),list.get(j))){
+					putCallParityList.add(new PutCallParity((OptionCall) list.get(i),(OptionPut) list.get(j)));
+				}
+			}
+		}
+		return (ArrayList<PutCallParity>) putCallParityList;
+	}
 	public static List<Reversal> reversal(List<Option> list) {
 		return list.stream()
 				.flatMap(option1 -> list.stream()

@@ -1,5 +1,7 @@
 package mycode.strategy_;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 public class LongBoxSpread implements  Strategy{
 
     public BullSpread bullSpread;
@@ -123,15 +125,26 @@ public class LongBoxSpread implements  Strategy{
     }
 
     public  double getInterestRate(){
-        double originalLoan=price();
-        double returnLoan=Math.abs(bullSpread.sell.getOpt().getStrike()-bullSpread.buy.getOpt().getStrike());
+        double originalLoan=price()+COMMISSION/100;//output
+        double returnLoan=Math.abs(bullSpread.sell.getOpt().getStrike()-bullSpread.buy.getOpt().getStrike());//input
 
-        return  ((originalLoan-returnLoan)/originalLoan)*100*-1;
+        return  ((returnLoan-originalLoan)/originalLoan)*100.0;
     }
     public  double yearlyInterestRate(){
         //if the result is negative it means that i get money
         return (getInterestRate()/ bullSpread.sell.getOpt().daysToExpiration())*365;
 
+    }
+    public String toJson() {
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        try {
+            // Convert LongBoxSpread object to JSON string
+            return objectMapper.writeValueAsString(this);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null; // or handle the exception as needed
+        }
     }
 
     public static void main(String[] args) {
