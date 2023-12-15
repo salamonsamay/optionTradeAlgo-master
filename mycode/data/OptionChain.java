@@ -246,8 +246,8 @@ public class OptionChain extends  Thread{
                         failed_counter++;
                     }
                     try {
-                        int r=(int)(Math.random()*3)+1;
-                        Thread.sleep(5000*r);
+                        long r=(int)(Math.random()*5)+5;
+                        Thread.sleep(r);
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);
                     }

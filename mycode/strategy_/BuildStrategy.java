@@ -94,20 +94,20 @@ public class BuildStrategy {
 	public static ArrayList<LongBoxSpread> longBoxSpread2(ArrayList<BullSpread> bullList, ArrayList<BearSpread> bearList, double spread_diff) {
 		Map<String, List<BullSpread>> bullMap = bullList.stream().collect(Collectors.groupingBy(Tools::getGroup));
 		Map<String, List<BearSpread>> bearMap = bearList.stream().collect(Collectors.groupingBy(Tools::getGroup));
-
+		System.out.println("the key size  in bull map " + bullMap.keySet().size());
+		System.out.println("the key size in bear map " + bearMap.keySet().size());
 		ArrayList<LongBoxSpread> longBoxSpreadsList = new ArrayList<>();
 
 		for (String key : bullMap.keySet()) {
 			if (bearMap.containsKey(key)) {
 				List<BullSpread> bullSpreads = bullMap.get(key);
 				List<BearSpread> bearSpreads = bearMap.get(key);
-
+				System.out.println(key);
 				for (BullSpread bullSpread : bullSpreads) {
 					for (BearSpread bearSpread : bearSpreads) {
 						if (Math.abs(bearSpread.buy.getOpt().getStrike() - bearSpread.sell.getOpt().getStrike()) <= spread_diff) {
 							if (LongBoxSpread.inputIsCorrect(bullSpread, bearSpread)) {
 								longBoxSpreadsList.add(new LongBoxSpread(bullSpread, bearSpread));
-
 							}
 						}
 					}

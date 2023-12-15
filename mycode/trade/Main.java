@@ -34,10 +34,10 @@ public class Main {
 
 		//////////////////////build strategy///////////////////////////////////////////
 		System.out.println("start to build strategy");
-		ArrayList<BearSpread> bearList=BuildStrategy.bearSpread(optionList,5000);
-		ArrayList<BullSpread> bullList=BuildStrategy.bullSpread(optionList,5000);
-	//	ArrayList<PutCallParity> putCallParityArrayList=BuildStrategy.putCallParities(optionList);
-	//	runPutCallParity(client,putCallParityArrayList);
+		ArrayList<BearSpread> bearList=BuildStrategy.bearSpread(optionList,500);
+		ArrayList<BullSpread> bullList=BuildStrategy.bullSpread(optionList,500);
+		//	ArrayList<PutCallParity> putCallParityArrayList=BuildStrategy.putCallParities(optionList);
+		//	runPutCallParity(client,putCallParityArrayList);
 
 //		for(PutCallParity value:putCallParityArrayList){
 //			System.out.println(value.checkPutCallParity());
@@ -45,7 +45,6 @@ public class Main {
 //
 //
 //		}
-		//	ArrayList<Reversal> reversal= (ArrayList<Reversal>) BuildStrategy.reversal(optionList);
 
 		System.out.println("start to loops over :"+bearList.size());
 		System.out.println("start to loops over :"+bullList.size());
@@ -55,13 +54,15 @@ public class Main {
 		//	strategys.addAll(BuildStrategy.ironCondor(bullList,bearList));
 
 		ArrayList<Strategy> strategys=new ArrayList<>();
+		strategys.addAll(bearList);
+		strategys.addAll(bullList);
 		strategys.addAll(BuildStrategy.longBoxSpread2(bullList,bearList,100));
-		strategys.addAll(BuildStrategy.shortBoxSpread2(bullList,bearList,5000));
-
+		strategys.addAll(BuildStrategy.shortBoxSpread2(bullList,bearList,500));
+		strategys.addAll( BuildStrategy.reversal(optionList));
 		//	strategys.addAll(BuildStrategy.shortBoxSpread(bullList,bearList,100));
 
 
-			strategys.addAll(BuildStrategy.ironCondor2(bullList,bearList,1000));
+		//	strategys.addAll(BuildStrategy.ironCondor2(bullList,bearList,1000));
 
 		//strategys.addAll(BuildStrategy.shortBoxSpread(bullList,bearList,100));
 		//	strategys.addAll(BuildStrategy.ironCondor(bullList,bearList));
@@ -94,13 +95,13 @@ public class Main {
 						System.out.println("send order for "+copy);
 
 
-						if(counter++>500){
+						if(counter++>20){
 							client.reqGlobalCancel();
 							Tools.sendedOrder.clear();
 							counter=0;
 						}
 						try {
-							Thread.sleep(3000);
+							Thread.sleep(500);
 						} catch (InterruptedException e) {
 							throw new RuntimeException(e);
 						}
@@ -116,10 +117,10 @@ public class Main {
 
 	}
 
-    public  static void runPutCallParity(EClientSocket client, ArrayList<PutCallParity> list){
+	public  static void runPutCallParity(EClientSocket client, ArrayList<PutCallParity> list){
 		Thread t=new Thread(()->{
 			while (true){
-					Collections.sort(list);
+				Collections.sort(list);
 
 				try {
 					System.out.println("_______________________________");
@@ -318,14 +319,14 @@ public class Main {
 			return false;
 		}
 		if(strategy instanceof  Reversal){
-			if(strategy.maxProfit()>50){
+			if(strategy.maxProfit()>50 && ((Reversal) strategy).syntheticLong.buy.getOpt().getAsk()>((Reversal) strategy).syntheticLong.sell.getOpt().getAsk()){
 				return true;
 			}
 			return false;
 		}
 		if(strategy instanceof  ShortBoxSpread){
 
-			if(((ShortBoxSpread) strategy).yearlyInterestRate()<2
+			if(((ShortBoxSpread) strategy).maxLoss()>0
 			){
 				return  true;
 			}
@@ -336,6 +337,11 @@ public class Main {
 				return  true;
 			}
 		}
+		if(strategy instanceof  BearSpread || strategy instanceof  BullSpread){
+			if(strategy.maxLoss()>0)
+				return true;
+			return false;
+		}
 		return false;
 	}
 	private static void cancelTimer(EClientSocket client){
@@ -345,7 +351,7 @@ public class Main {
 				while (true) {
 					client.reqGlobalCancel();
 					try {
-						Thread.sleep(1000*60*5);
+						Thread.sleep(1000*60*50);
 					} catch (InterruptedException e) {
 						throw new RuntimeException(e);
 					}
